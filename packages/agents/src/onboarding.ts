@@ -37,12 +37,11 @@ export async function screenOnboarding(submission: OnboardingSubmission): Promis
   };
 }
 
-// The slow part: risk tiering + the LLM tool-use draft + validation +
-// persistence. This is what runs inside the background job.
-export async function draftAndPersistRegime(
-  userId: string,
-  submission: OnboardingSubmission
-): Promise<{ regimeId: string; exerciseCount: number }> {
+// Must run before RegimeGenerationJob is created — the job row has a
+// required foreign key to User, so the user has to exist first. Kept
+// separate from draftAndPersistRegime so the real tRPC procedure can call
+// it synchronously, before spawning the background job.
+export async function upsertUserForOnboarding(userId: string, submission: OnboardingSubmission): Promise<void> {
   const riskTier = determineRiskTier(submission.answers);
 
   await prisma.user.upsert({
@@ -56,6 +55,16 @@ export async function draftAndPersistRegime(
     },
     update: { riskTier },
   });
+}
+
+// The slow part: risk tiering + the LLM tool-use draft + validation +
+// persistence. This is what runs inside the background job. Assumes the
+// User row already exists (see upsertUserForOnboarding above).
+export async function draftAndPersistRegime(
+  userId: string,
+  submission: OnboardingSubmission
+): Promise<{ regimeId: string; exerciseCount: number }> {
+  const riskTier = determineRiskTier(submission.answers);
 
   const draft = await generateInitialRegime({
     goalType: submission.answers.goalType,
@@ -111,6 +120,7 @@ export async function runOnboarding(
     return { status: "red_flagged", reasons: screening.reasons };
   }
 
+  await upsertUserForOnboarding(userId, submission);
   const { regimeId, exerciseCount } = await draftAndPersistRegime(userId, submission);
   return { status: "regime_drafted", regimeId, exerciseCount };
 }

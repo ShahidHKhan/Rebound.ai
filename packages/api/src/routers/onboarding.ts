@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { after } from "next/server";
 import { z } from "zod";
 
-import { runRegimeGenerationJob, screenOnboarding } from "@rebound/agents";
+import { runRegimeGenerationJob, screenOnboarding, upsertUserForOnboarding } from "@rebound/agents";
 
 import { protectedProcedure, router } from "../trpc";
 
@@ -40,6 +40,10 @@ export const onboardingRouter = router({
     if (screening.flagged) {
       return { status: "red_flagged" as const, reasons: screening.reasons };
     }
+
+    // Must happen before job creation — RegimeGenerationJob.userId is a
+    // required foreign key to User.
+    await upsertUserForOnboarding(ctx.userId, input);
 
     const job = await ctx.prisma.regimeGenerationJob.create({
       data: { userId: ctx.userId, status: "PENDING" },
