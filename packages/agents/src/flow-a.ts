@@ -39,7 +39,7 @@ Use search_exercises to find candidates, then call submit_regime with your final
   while (true) {
     const response = await anthropic.messages.create({
       model: REGIME_MODEL,
-      max_tokens: 2048,
+      max_tokens: 4096,
       tools,
       messages,
     });

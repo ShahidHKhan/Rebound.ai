@@ -12,29 +12,37 @@ export interface OnboardingSubmission {
   lifestyleContextText: string;
 }
 
+export interface ScreeningResult {
+  flagged: boolean;
+  reasons: string[];
+}
+
 export type OnboardingResult =
   | { status: "red_flagged"; reasons: string[] }
   | { status: "regime_drafted"; regimeId: string; exerciseCount: number };
 
-export async function runOnboarding(
-  userId: string,
-  submission: OnboardingSubmission
-): Promise<OnboardingResult> {
-  // Gate 1: structured red-flag screen (rules-based, no LLM).
+// The synchronous part of Flow A: both red-flag gates, fast enough to run
+// inline before the client gets a response (System Design > Flow A sequence).
+export async function screenOnboarding(submission: OnboardingSubmission): Promise<ScreeningResult> {
   const structuredScreen = checkRedFlags(submission.answers);
 
-  // Gate 2: free-text classifier — catches disclosures the structured screen missed.
   const freeText = `${submission.symptomsText}\n\n${submission.lifestyleContextText}`.trim();
   const freeTextScreen = freeText
     ? await classifyFreeTextRedFlags(freeText)
     : { flagged: false, reasons: [] };
 
-  const reasons = [...structuredScreen.reasons, ...freeTextScreen.reasons];
-  if (structuredScreen.flagged || freeTextScreen.flagged) {
-    return { status: "red_flagged", reasons };
-  }
+  return {
+    flagged: structuredScreen.flagged || freeTextScreen.flagged,
+    reasons: [...structuredScreen.reasons, ...freeTextScreen.reasons],
+  };
+}
 
-  // Both gates clear — proceed to risk tiering and Flow A.
+// The slow part: risk tiering + the LLM tool-use draft + validation +
+// persistence. This is what runs inside the background job.
+export async function draftAndPersistRegime(
+  userId: string,
+  submission: OnboardingSubmission
+): Promise<{ regimeId: string; exerciseCount: number }> {
   const riskTier = determineRiskTier(submission.answers);
 
   await prisma.user.upsert({
@@ -88,5 +96,21 @@ export async function runOnboarding(
     include: { exerciseList: true },
   });
 
-  return { status: "regime_drafted", regimeId: regime.id, exerciseCount: regime.exerciseList.length };
+  return { regimeId: regime.id, exerciseCount: regime.exerciseList.length };
+}
+
+// Convenience wrapper combining both steps synchronously — used by test
+// scripts. The real onboarding.submit tRPC procedure (Task 11) calls the
+// two halves separately so only screening blocks the client response.
+export async function runOnboarding(
+  userId: string,
+  submission: OnboardingSubmission
+): Promise<OnboardingResult> {
+  const screening = await screenOnboarding(submission);
+  if (screening.flagged) {
+    return { status: "red_flagged", reasons: screening.reasons };
+  }
+
+  const { regimeId, exerciseCount } = await draftAndPersistRegime(userId, submission);
+  return { status: "regime_drafted", regimeId, exerciseCount };
 }
