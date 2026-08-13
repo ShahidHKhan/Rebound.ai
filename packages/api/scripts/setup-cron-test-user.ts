@@ -3,6 +3,8 @@ import { prisma } from "@rebound/db";
 const USER_ID = "test-user-cron-due";
 
 async function main() {
+  await prisma.adjustmentEvent.deleteMany({ where: { userId: USER_ID } });
+  await prisma.sessionLog.deleteMany({ where: { userId: USER_ID } });
   await prisma.regime.deleteMany({ where: { userId: USER_ID } });
   await prisma.user.upsert({
     where: { id: USER_ID },

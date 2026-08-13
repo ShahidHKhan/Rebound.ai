@@ -116,6 +116,7 @@ export default function Home() {
   return (
     <main style={pageStyle}>
       <h1>Today</h1>
+      <p style={{ color: "#666" }}>Regime v{data.regime.versionNumber}</p>
       <p>{data.streak > 0 ? `${data.streak}-day streak` : "No streak yet — complete a session to start one"}</p>
 
       <SessionCard
