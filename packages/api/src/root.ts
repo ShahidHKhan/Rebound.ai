@@ -1,3 +1,4 @@
+import { adminRouter } from "./routers/admin";
 import { healthRouter } from "./routers/health";
 import { onboardingRouter } from "./routers/onboarding";
 import { regimeRouter } from "./routers/regime";
@@ -11,6 +12,7 @@ export const appRouter = router({
   regime: regimeRouter,
   sessionLog: sessionLogRouter,
   workoutSession: workoutSessionRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

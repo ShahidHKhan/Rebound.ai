@@ -47,7 +47,11 @@ export const sessionLogRouter = router({
 
       const escalation = checkEscalation(entries, user.riskTier);
 
-      if (escalation.action === "rollback") {
+      // Admin panel > Manual override: both the escalation monitor and Flow B
+      // must skip automated action for a manually-held user. Flow B's cron
+      // route already filters manualHold users out at the query level; this
+      // was the one call site where that check was missing.
+      if (escalation.action === "rollback" && !user.manualHold) {
         await applyEscalationRollback(
           ctx.userId,
           activeRegime.id,
