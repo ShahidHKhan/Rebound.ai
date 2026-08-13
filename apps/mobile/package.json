@@ -1,18 +1,26 @@
 {
   "name": "@rebound/mobile",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "dependencies": {
     "@clerk/clerk-expo": "^2.9.0",
     "@rebound/api": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
+    "@trpc/server": "^11.0.0",
     "expo": "~57.0.12",
+    "expo-constants": "~57.0.10",
+    "expo-linking": "~57.0.5",
+    "expo-router": "~57.0.12",
     "expo-secure-store": "~15.0.7",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.2",
+    "react-native-web": "^0.21.2",
     "superjson": "^2.2.1"
   },
   "devDependencies": {

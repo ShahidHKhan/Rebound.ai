@@ -1,0 +1,30 @@
+import { StyleSheet } from "react-native";
+
+export const shared = StyleSheet.create({
+  page: { flex: 1, padding: 24, gap: 12 },
+  centeredPage: { flex: 1, justifyContent: "center", padding: 24, gap: 12 },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 4 },
+  subtitle: { fontSize: 20, fontWeight: "600" },
+  label: { fontSize: 14, fontWeight: "600", color: "#374151" },
+  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 12, fontSize: 16 },
+  button: { backgroundColor: "#2563eb", borderRadius: 8, padding: 14, alignItems: "center", marginTop: 8 },
+  buttonDisabled: { opacity: 0.5 },
+  buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: "#2563eb",
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+  },
+  secondaryButtonText: { color: "#2563eb", fontWeight: "600" },
+  error: { color: "#dc2626" },
+  alert: { color: "#dc2626", fontWeight: "600" },
+  link: { color: "#2563eb", marginTop: 16, textAlign: "center" },
+  card: { borderWidth: 1, borderColor: "#ddd", borderRadius: 8, padding: 16, marginBottom: 12, gap: 8 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" },
+  chip: { borderWidth: 1, borderColor: "#ccc", borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16 },
+  chipSelected: { backgroundColor: "#2563eb", borderColor: "#2563eb" },
+  chipText: { color: "#111" },
+  chipTextSelected: { color: "#fff" },
+});

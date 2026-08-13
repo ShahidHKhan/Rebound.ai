@@ -1,0 +1,24 @@
+import { ClerkProvider } from "@clerk/clerk-expo";
+import { Slot } from "expo-router";
+
+import { tokenCache } from "../lib/clerk-token-cache";
+import { TRPCProvider } from "../lib/trpc";
+
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY is not set");
+}
+
+// Route groups below ((auth), (app)) each own their own auth-gating redirect
+// — the client-side equivalent of apps/web's proxy.ts, since Expo has no
+// server middleware to protect routes at.
+export default function RootLayout() {
+  return (
+    <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <TRPCProvider>
+        <Slot />
+      </TRPCProvider>
+    </ClerkProvider>
+  );
+}
