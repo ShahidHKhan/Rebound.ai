@@ -88,65 +88,64 @@ export const regimeRouter = router({
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const activated = await ctx.prisma.$transaction(async (tx) => {
-        if (input.exercises) {
-          await tx.regimeExercise.deleteMany({ where: { regimeId: regime.id } });
-        }
+      // No inner $transaction here — ctx.prisma is already a transaction
+      // client for the whole request (RLS middleware, packages/api/src/trpc.ts),
+      // so these writes are already atomic without nesting one.
+      if (input.exercises) {
+        await ctx.prisma.regimeExercise.deleteMany({ where: { regimeId: regime.id } });
+      }
 
-        const updated = await tx.regime.update({
-          where: { id: regime.id },
-          data: {
-            status: "ACTIVE",
-            createdBy: input.exercises ? "USER_EDITED" : regime.createdBy,
-            ...(input.exercises
-              ? {
-                  exerciseList: {
-                    create: finalExercises.map((exercise, index) => ({
-                      exerciseId: exercise.exerciseId,
-                      sets: exercise.sets,
-                      reps: exercise.reps,
-                      durationSeconds: exercise.durationSeconds,
-                      frequency: exercise.frequency,
-                      sessionSlot: exercise.sessionSlot,
-                      orderIndex: index,
-                    })),
-                  },
-                }
-              : {}),
-          },
-          include: { exerciseList: true },
-        });
-
-        // Placeholder scheduling — real wake/sunset timing is still an open
-        // PRD item (Open Question #3).
-        const morningTime = new Date(today);
-        morningTime.setHours(7, 0, 0, 0);
-        const eveningTime = new Date(today);
-        eveningTime.setHours(18, 0, 0, 0);
-
-        await tx.workoutSession.createMany({
-          data: [
-            {
-              userId: ctx.userId,
-              regimeVersionId: updated.id,
-              date: today,
-              slot: "MORNING",
-              scheduledAt: morningTime,
-            },
-            {
-              userId: ctx.userId,
-              regimeVersionId: updated.id,
-              date: today,
-              slot: "EVENING",
-              scheduledAt: eveningTime,
-            },
-          ],
-          skipDuplicates: true,
-        });
-
-        return updated;
+      const updated = await ctx.prisma.regime.update({
+        where: { id: regime.id },
+        data: {
+          status: "ACTIVE",
+          createdBy: input.exercises ? "USER_EDITED" : regime.createdBy,
+          ...(input.exercises
+            ? {
+                exerciseList: {
+                  create: finalExercises.map((exercise, index) => ({
+                    exerciseId: exercise.exerciseId,
+                    sets: exercise.sets,
+                    reps: exercise.reps,
+                    durationSeconds: exercise.durationSeconds,
+                    frequency: exercise.frequency,
+                    sessionSlot: exercise.sessionSlot,
+                    orderIndex: index,
+                  })),
+                },
+              }
+            : {}),
+        },
+        include: { exerciseList: true },
       });
 
-      return { regimeId: activated.id, exerciseCount: activated.exerciseList.length };
+      // Placeholder scheduling — real wake/sunset timing is still an open
+      // PRD item (Open Question #3).
+      const morningTime = new Date(today);
+      morningTime.setHours(7, 0, 0, 0);
+      const eveningTime = new Date(today);
+      eveningTime.setHours(18, 0, 0, 0);
+
+      await ctx.prisma.workoutSession.createMany({
+        data: [
+          {
+            userId: ctx.userId,
+            regimeVersionId: updated.id,
+            date: today,
+            slot: "MORNING",
+            scheduledAt: morningTime,
+          },
+          {
+            userId: ctx.userId,
+            regimeVersionId: updated.id,
+            date: today,
+            slot: "EVENING",
+            scheduledAt: eveningTime,
+          },
+        ],
+        skipDuplicates: true,
+      });
+
+      return { regimeId: updated.id, exerciseCount: updated.exerciseList.length };
     }),
 });

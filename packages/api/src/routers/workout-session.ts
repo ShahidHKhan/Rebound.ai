@@ -1,12 +1,15 @@
 import { TRPCError } from "@trpc/server";
-import type { PrismaClient } from "@rebound/db";
+import type { Prisma, PrismaClient } from "@rebound/db";
 import { z } from "zod";
 
 import { startOfToday } from "../date-utils";
 import { computeCurrentStreak } from "../streak";
 import { protectedProcedure, router } from "../trpc";
 
-async function getCurrentStreak(userId: string, prisma: PrismaClient): Promise<number> {
+async function getCurrentStreak(
+  userId: string,
+  prisma: PrismaClient | Prisma.TransactionClient
+): Promise<number> {
   const completedSessions = await prisma.workoutSession.findMany({
     where: { userId, completedAt: { not: null } },
     select: { date: true },
