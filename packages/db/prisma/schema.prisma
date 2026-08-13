@@ -90,6 +90,14 @@ model User {
   role         UserRole     @default(USER)
   signupCohort SignupCohort @default(BETA)
 
+  // Daily Session Structure: morning session "on wake", evening "at sunset".
+  // Both nullable/optional at onboarding — regime.activate falls back to the
+  // original 7am/6pm placeholders when unset, so this is purely additive.
+  // wakeTimeMinutes: minutes since local midnight (e.g. 420 = 07:00).
+  wakeTimeMinutes Int?
+  latitude        Float?
+  longitude       Float?
+
   // Set from the admin panel; checked by both the escalation monitor and
   // Flow B before either takes action on this user.
   manualHold       Boolean @default(false)

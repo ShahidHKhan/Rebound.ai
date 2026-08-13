@@ -10,6 +10,11 @@ export interface OnboardingSubmission {
   targetMovement: string;
   symptomsText: string;
   lifestyleContextText: string;
+  // Daily Session Structure: morning "on wake", evening "at sunset" — both
+  // optional, regime.activate falls back to placeholder times when absent.
+  wakeTimeMinutes?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ScreeningResult {
@@ -52,8 +57,19 @@ export async function upsertUserForOnboarding(userId: string, submission: Onboar
       riskTier,
       conditionFlags: submission.answers.conditionFlags,
       targetMovements: [submission.targetMovement],
+      wakeTimeMinutes: submission.wakeTimeMinutes,
+      latitude: submission.latitude,
+      longitude: submission.longitude,
     },
-    update: { riskTier },
+    // undefined fields are omitted by Prisma, not nulled — a re-submission
+    // that skips these (e.g. declined location permission) leaves any
+    // previously-set values alone rather than wiping them.
+    update: {
+      riskTier,
+      wakeTimeMinutes: submission.wakeTimeMinutes,
+      latitude: submission.latitude,
+      longitude: submission.longitude,
+    },
   });
 }
 

@@ -1,4 +1,5 @@
 import { Link, useRouter } from "expo-router";
+import * as Location from "expo-location";
 import { useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 
@@ -6,6 +7,21 @@ import { ChipGroup } from "../../components/ChipGroup";
 import { trpc } from "../../lib/trpc";
 import { shared } from "../../lib/styles";
 import { Button } from "../../components/Button";
+
+function formatWakeTime(minutes: number): string {
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  const period = hour < 12 ? "AM" : "PM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`;
+}
+
+// No native time picker without another dependency — preset chips instead,
+// same pattern as every other enum field on this screen.
+const WAKE_TIME_OPTIONS = [360, 390, 420, 450, 480, 510].map((minutes) => ({
+  value: String(minutes),
+  label: formatWakeTime(minutes),
+}));
 
 type GoalType = "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
 type InjurySeverity = "none" | "mild" | "moderate" | "severe";
@@ -60,6 +76,13 @@ export default function OnboardingScreen() {
   const [symptomsText, setSymptomsText] = useState("");
   const [lifestyleContextText, setLifestyleContextText] = useState("");
 
+  // Daily Session Structure: morning "on wake", evening "at sunset" — both
+  // optional. wakeTimeMinutes pre-fills to 7:00 AM; location has no default
+  // since it needs an explicit OS permission grant.
+  const [wakeTimeMinutes, setWakeTimeMinutes] = useState<string[]>(["420"]);
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "granted" | "denied">("idle");
+
   const [jobId, setJobId] = useState<string | null>(null);
   const [redFlagReasons, setRedFlagReasons] = useState<string[] | null>(null);
 
@@ -89,6 +112,18 @@ export default function OnboardingScreen() {
     setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   }
 
+  async function requestLocation() {
+    setLocationStatus("requesting");
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setLocationStatus("denied");
+      return;
+    }
+    const position = await Location.getCurrentPositionAsync({});
+    setLocationCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+    setLocationStatus("granted");
+  }
+
   function handleSubmit() {
     submit.mutate({
       answers: {
@@ -108,6 +143,9 @@ export default function OnboardingScreen() {
       targetMovement,
       symptomsText,
       lifestyleContextText,
+      wakeTimeMinutes: wakeTimeMinutes[0] ? Number(wakeTimeMinutes[0]) : undefined,
+      latitude: locationCoords?.lat,
+      longitude: locationCoords?.lng,
     });
   }
 
@@ -208,6 +246,28 @@ export default function OnboardingScreen() {
         value={lifestyleContextText}
         onChangeText={setLifestyleContextText}
       />
+
+      <Text style={shared.label}>Preferred wake time (morning session)</Text>
+      <ChipGroup
+        options={WAKE_TIME_OPTIONS}
+        selected={wakeTimeMinutes}
+        onToggle={(v) => toggleSingle(setWakeTimeMinutes, v)}
+      />
+
+      <Text style={shared.label}>
+        Evening session timing (optional — anchors it to local sunset instead of a fixed time)
+      </Text>
+      {locationStatus === "granted" ? (
+        <Text>Location shared — evening session will follow sunset.</Text>
+      ) : (
+        <Button
+          label={locationStatus === "requesting" ? "Requesting…" : "Share my location"}
+          variant="secondary"
+          onPress={requestLocation}
+          disabled={locationStatus === "requesting"}
+        />
+      )}
+      {locationStatus === "denied" && <Text>Location unavailable — evening session will default to 6pm.</Text>}
 
       <Button label={submit.isPending ? "Submitting…" : "Continue"} onPress={handleSubmit} disabled={submit.isPending} />
       {submit.isError && <Text style={shared.error}>{submit.error.message}</Text>}

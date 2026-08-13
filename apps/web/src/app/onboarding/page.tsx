@@ -60,6 +60,13 @@ export default function OnboardingPage() {
   const [symptomsText, setSymptomsText] = useState("");
   const [lifestyleContextText, setLifestyleContextText] = useState("");
 
+  // Daily Session Structure: morning "on wake", evening "at sunset" — both
+  // optional. wakeTime pre-fills to a sensible default; location has no
+  // default since it needs an explicit browser permission grant.
+  const [wakeTime, setWakeTime] = useState("07:00");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "granted" | "denied">("idle");
+
   const [jobId, setJobId] = useState<string | null>(null);
   const [redFlagReasons, setRedFlagReasons] = useState<string[] | null>(null);
 
@@ -85,8 +92,21 @@ export default function OnboardingPage() {
     setConditionFlags((prev) => (prev.includes(value) ? prev.filter((flag) => flag !== value) : [...prev, value]));
   }
 
+  function requestLocation() {
+    setLocationStatus("requesting");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied"),
+      { timeout: 10_000 }
+    );
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const [wakeHours, wakeMinutes] = wakeTime.split(":").map(Number);
     submit.mutate({
       answers: {
         age: Number(age),
@@ -98,6 +118,9 @@ export default function OnboardingPage() {
       targetMovement,
       symptomsText,
       lifestyleContextText,
+      wakeTimeMinutes: wakeTime ? wakeHours * 60 + wakeMinutes : undefined,
+      latitude: location?.lat,
+      longitude: location?.lng,
     });
   }
 
@@ -239,6 +262,23 @@ export default function OnboardingPage() {
             rows={4}
           />
         </label>
+
+        <label style={fieldStyle}>
+          Preferred wake time (morning session)
+          <input type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} />
+        </label>
+
+        <div style={fieldStyle}>
+          <span>Evening session timing (optional — anchors it to local sunset instead of a fixed time)</span>
+          {locationStatus === "granted" ? (
+            <p>Location shared — evening session will follow sunset.</p>
+          ) : (
+            <button type="button" onClick={requestLocation} disabled={locationStatus === "requesting"}>
+              {locationStatus === "requesting" ? "Requesting…" : "Share my location"}
+            </button>
+          )}
+          {locationStatus === "denied" && <p>Location unavailable — evening session will default to 6pm.</p>}
+        </div>
 
         <button type="submit" disabled={submit.isPending}>
           {submit.isPending ? "Submitting…" : "Continue"}

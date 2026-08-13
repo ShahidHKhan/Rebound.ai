@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { validateRegime, validateStructure } from "@rebound/clinical-rules";
 import type { DraftRegime } from "@rebound/clinical-rules";
+import * as SunCalc from "suncalc";
 import { z } from "zod";
 
 import { protectedProcedure, router } from "../trpc";
@@ -119,12 +120,30 @@ export const regimeRouter = router({
         include: { exerciseList: true },
       });
 
-      // Placeholder scheduling — real wake/sunset timing is still an open
-      // PRD item (Open Question #3).
+      // Daily Session Structure: morning "on wake", evening "at sunset".
+      // Falls back to the original 7am/6pm placeholders when the user
+      // hasn't supplied a wake time / location at onboarding.
       const morningTime = new Date(today);
-      morningTime.setHours(7, 0, 0, 0);
-      const eveningTime = new Date(today);
-      eveningTime.setHours(18, 0, 0, 0);
+      if (user.wakeTimeMinutes != null) {
+        morningTime.setHours(Math.floor(user.wakeTimeMinutes / 60), user.wakeTimeMinutes % 60, 0, 0);
+      } else {
+        morningTime.setHours(7, 0, 0, 0);
+      }
+
+      // sunset can genuinely be null near the poles (24h daylight/darkness) —
+      // falls back to the placeholder the same as "no location supplied".
+      const computedSunset =
+        user.latitude != null && user.longitude != null
+          ? SunCalc.getTimes(today, user.latitude, user.longitude).sunset
+          : null;
+
+      let eveningTime: Date;
+      if (computedSunset != null) {
+        eveningTime = computedSunset;
+      } else {
+        eveningTime = new Date(today);
+        eveningTime.setHours(18, 0, 0, 0);
+      }
 
       await ctx.prisma.workoutSession.createMany({
         data: [

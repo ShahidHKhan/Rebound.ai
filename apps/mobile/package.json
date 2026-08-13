@@ -12,6 +12,7 @@
     "expo": "~57.0.12",
     "expo-constants": "~57.0.10",
     "expo-linking": "~57.0.5",
+    "expo-location": "~57.0.9",
     "expo-router": "~57.0.12",
     "expo-secure-store": "~15.0.7",
     "expo-status-bar": "~57.0.1",
