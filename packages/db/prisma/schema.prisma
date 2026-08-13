@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────
+
+enum GoalType {
+  INJURY_RECOVERY
+  STRENGTH
+  MOBILITY
+  GENERAL_FITNESS
+}
+
+// Drives the change-ceiling table in Clinical Risk Framing > Regime Generation Architecture.
+enum RiskTier {
+  GENERAL
+  LIGHT_INJURY
+  HEAVIER_CHRONIC_ELDERLY
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SignupCohort {
+  BETA
+  PROD
+}
+
+enum ExerciseCategory {
+  MOBILITY
+  STRENGTH
+  STRETCH
+}
+
+enum SessionSlot {
+  MORNING
+  EVENING
+}
+
+enum RegimeCreatedBy {
+  AGENT
+  USER_EDITED
+}
+
+enum RegimeStatus {
+  ACTIVE
+  SUPERSEDED
+  ENDED
+}
+
+enum TriggerType {
+  SCHEDULED_ADJUSTMENT
+  ESCALATION_ROLLBACK
+}
+
+enum JobStatus {
+  PENDING
+  COMPLETE
+  FAILED
+}
+
+// ── User ─────────────────────────────────────────────────────────────────
+
+model User {
+  // Clerk's user id is used directly as the primary key so no separate
+  // identity-mapping table is needed between auth and app data.
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  goalType  GoalType
+  riskTier  RiskTier
+  // e.g. autoimmune, post_surgical, chronic
+  conditionFlags String[]
+  // Schema stores an array for forward compatibility; v1 enforces a single
+  // primary movement at the UI/API layer (Data Model note, Open Question #10).
+  targetMovements String[]
+
+  role         UserRole     @default(USER)
+  signupCohort SignupCohort @default(BETA)
+
+  // Set from the admin panel; checked by both the escalation monitor and
+  // Flow B before either takes action on this user.
+  manualHold       Boolean @default(false)
+  manualHoldReason String?
+
+  regimes               Regime[]
+  workoutSessions       WorkoutSession[]
+  sessionLogs           SessionLog[]
+  adjustmentEvents      AdjustmentEvent[]
+  regimeGenerationJobs  RegimeGenerationJob[]
+
+  @@map("users")
+}
+
+// ── Exercise library ────────────────────────────────────────────────────
+
+model Exercise {
+  id       String            @id @default(cuid())
+  name     String
+  category ExerciseCategory
+
+  targetMuscleGroups String[]
+  difficultyLevel    Int
+  // No PT-annotated contraindications in v1 (Free Exercise DB has none) —
+  // field exists for the deferred PT-annotated content phase.
+  contraindications  String[]
+  // Links easier/harder variants of the same movement.
+  progressionGroup   String?
+  media              Json?
+  source             String
+
+  // Free Exercise DB slug, kept for idempotent re-seeding.
+  externalId String? @unique
+
+  regimeExercises RegimeExercise[]
+  presetExercises PresetExercise[]
+
+  @@map("exercises")
+}
+
+// ── Regime (versioned) ──────────────────────────────────────────────────
+
+model Regime {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  versionNumber Int
+  createdAt     DateTime        @default(now())
+  createdBy     RegimeCreatedBy
+
+  status    RegimeStatus @default(ACTIVE)
+  endReason String?
+
+  parentRegimeId String?
+  parentRegime   Regime?  @relation("RegimeHistory", fields: [parentRegimeId], references: [id])
+  childRegimes   Regime[] @relation("RegimeHistory")
+
+  exerciseList RegimeExercise[]
+
+  workoutSessions     WorkoutSession[]
+  sessionLogs         SessionLog[]
+  adjustmentEventsFrom AdjustmentEvent[] @relation("AdjustmentFromRegime")
+  adjustmentEventsTo   AdjustmentEvent[] @relation("AdjustmentToRegime")
+  regimeGenerationJobs RegimeGenerationJob[]
+
+  @@unique([userId, versionNumber])
+  @@map("regimes")
+}
+
+// Join table: one row per exercise placed in a regime, carrying the
+// prescription (sets/reps/duration/frequency) and its morning/evening slot.
+model RegimeExercise {
+  id         String @id @default(cuid())
+  regimeId   String
+  regime     Regime @relation(fields: [regimeId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  sets            Int?
+  reps            Int?
+  durationSeconds Int?
+  frequency       String?
+  sessionSlot     SessionSlot
+  orderIndex      Int
+
+  @@map("regime_exercises")
+}
+
+// ── Presets ──────────────────────────────────────────────────────────────
+// Independent of a user's personalized regime; also the fallback destination
+// when Flow A fails to produce a valid regime (LLM Reliability & Failure Handling).
+
+model Preset {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  riskTier    RiskTier?
+  createdAt   DateTime  @default(now())
+
+  exerciseList         PresetExercise[]
+  regimeGenerationJobs RegimeGenerationJob[]
+
+  @@map("presets")
+}
+
+model PresetExercise {
+  id         String   @id @default(cuid())
+  presetId   String
+  preset     Preset   @relation(fields: [presetId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  sets            Int?
+  reps            Int?
+  durationSeconds Int?
+  frequency       String?
+  sessionSlot     SessionSlot
+  orderIndex      Int
+
+  @@map("preset_exercises")
+}
+
+// ── Workout Session ──────────────────────────────────────────────────────
+// One per scheduled morning/evening slot per day. Distinct from SessionLog:
+// this tracks exercise completion (what streaks are computed from);
+// SessionLog tracks self-reported stats.
+
+model WorkoutSession {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  regimeVersionId String
+  regime          Regime   @relation(fields: [regimeVersionId], references: [id])
+  date           DateTime @db.Date
+
+  slot         SessionSlot
+  scheduledAt  DateTime
+  completedAt  DateTime?
+
+  exercisesCompleted WorkoutSessionExercise[]
+
+  @@unique([userId, date, slot])
+  @@map("workout_sessions")
+}
+
+model WorkoutSessionExercise {
+  id               String         @id @default(cuid())
+  workoutSessionId String
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exerciseId       String
+  completed        Boolean        @default(false)
+
+  @@map("workout_session_exercises")
+}
+
+// ── Session Log ──────────────────────────────────────────────────────────
+// One per day — the daily stat/pain check-in, bundled with the morning session.
+
+model SessionLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  regimeVersionId String
+  regime          Regime   @relation(fields: [regimeVersionId], references: [id])
+  loggedAt        DateTime @default(now())
+
+  painScore Int
+  // Flexible/typed field per goal_type (e.g. ROM degrees, rep max, RPE-based strength).
+  mobilityStrengthIndicator Json?
+  completed         Boolean @default(true)
+  perceivedExertion Int?
+  // "This made it worse" — feeds the adverse-event guardrail metric and the escalation monitor.
+  flag Boolean @default(false)
+
+  @@unique([userId, loggedAt])
+  @@map("session_logs")
+}
+
+// ── Adjustment Event ─────────────────────────────────────────────────────
+// Audit trail for the agent; also backs the reversal-rate guardrail metric.
+
+model AdjustmentEvent {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  fromRegimeVersionId String
+  fromRegime          Regime      @relation("AdjustmentFromRegime", fields: [fromRegimeVersionId], references: [id])
+  toRegimeVersionId   String
+  toRegime            Regime      @relation("AdjustmentToRegime", fields: [toRegimeVersionId], references: [id])
+  triggeredAt      DateTime    @default(now())
+
+  triggerType        TriggerType
+  // Days of Session Log history used — confirms only 1-2 weeks of data used.
+  trailingWindowUsed Int
+  // Agent's stated reason, stored even if not user-facing; also carries
+  // system-level causes (e.g. "held due to API outage").
+  rationale          String
+  // Set retroactively — this is the reversal-rate guardrail metric as a first-class field.
+  wasReversed        Boolean     @default(false)
+
+  @@map("adjustment_events")
+}
+
+// ── Regime Generation Job ────────────────────────────────────────────────
+// Backs Flow A's async-job + polling architecture (System Design > v1 Beta).
+
+model RegimeGenerationJob {
+  id       String    @id @default(cuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  status   JobStatus @default(PENDING)
+  retryCount Int     @default(0)
+  createdAt  DateTime @default(now())
+  completedAt DateTime?
+
+  resultRegimeId String?
+  resultRegime   Regime? @relation(fields: [resultRegimeId], references: [id])
+
+  fallbackPresetId String?
+  fallbackPreset   Preset? @relation(fields: [fallbackPresetId], references: [id])
+
+  error String?
+
+  @@map("regime_generation_jobs")
+}

@@ -1,0 +1,42 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# turborepo
+.turbo/
+
+# next.js
+.next/
+out/
+
+# expo
+.expo/
+dist/
+web-build/
+
+# prisma
+packages/db/generated/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# build
+build/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
