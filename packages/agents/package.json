@@ -1,0 +1,26 @@
+{
+  "name": "@rebound/agents",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "smoke-test": "dotenv -e .env -- tsx scripts/smoke-test.ts",
+    "tool-use-test": "dotenv -e .env -- tsx scripts/tool-use-test.ts",
+    "flow-a-test": "dotenv -e .env -- tsx scripts/flow-a-test.ts",
+    "flow-a-persist-test": "dotenv -e .env -- tsx scripts/flow-a-persist-test.ts",
+    "classifier-test": "dotenv -e .env -- tsx scripts/classifier-test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
+    "@rebound/clinical-rules": "workspace:*",
+    "@rebound/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "dotenv-cli": "^11.0.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}

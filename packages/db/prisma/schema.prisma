@@ -50,6 +50,7 @@ enum RegimeCreatedBy {
 }
 
 enum RegimeStatus {
+  DRAFT
   ACTIVE
   SUPERSEDED
   ENDED
