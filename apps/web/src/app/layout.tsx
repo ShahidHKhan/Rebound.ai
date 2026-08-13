@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -26,6 +26,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <ClerkProvider>
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
         <body>
+          <header
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              padding: "1rem 2rem",
+              gap: "1rem",
+            }}
+          >
+            <SignedOut>
+              <SignInButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </header>
           <TRPCProvider>{children}</TRPCProvider>
         </body>
       </html>

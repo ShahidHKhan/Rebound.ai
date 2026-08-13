@@ -15,6 +15,24 @@ const exerciseEditSchema = z.object({
 });
 
 export const regimeRouter = router({
+  getById: protectedProcedure.input(z.object({ regimeId: z.string() })).query(async ({ ctx, input }) => {
+    const regime = await ctx.prisma.regime.findUniqueOrThrow({
+      where: { id: input.regimeId },
+      include: {
+        exerciseList: {
+          orderBy: { orderIndex: "asc" },
+          include: { exercise: true },
+        },
+      },
+    });
+
+    if (regime.userId !== ctx.userId) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+
+    return regime;
+  }),
+
   activate: protectedProcedure
     .input(
       z.object({

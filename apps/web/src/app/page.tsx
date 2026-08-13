@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { trpc } from "@/lib/trpc/client";
 
 export default function Home() {
@@ -15,6 +17,11 @@ export default function Home() {
           : health.error
             ? `error: ${health.error.message}`
             : `ok (${health.data?.timestamp})`}
+      </p>
+      <p>
+        <Link href="/onboarding" style={{ color: "#2563eb", textDecoration: "underline" }}>
+          Start onboarding →
+        </Link>
       </p>
     </main>
   );

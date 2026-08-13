@@ -84,10 +84,20 @@ export async function draftAndPersistRegime(
     throw new Error(`Clinical validation failed: ${JSON.stringify(clinical.issues)}`);
   }
 
+  // Not just a first-onboarding path in practice — the same user can hit
+  // this again (retry, resubmission), so the next version number has to be
+  // computed rather than assumed, same as flow-b-runner.ts does for Flow B.
+  const lastRegime = await prisma.regime.findFirst({
+    where: { userId },
+    orderBy: { versionNumber: "desc" },
+    select: { versionNumber: true },
+  });
+  const versionNumber = (lastRegime?.versionNumber ?? 0) + 1;
+
   const regime = await prisma.regime.create({
     data: {
       userId,
-      versionNumber: 1,
+      versionNumber,
       createdBy: "AGENT",
       status: "DRAFT",
       exerciseList: {
