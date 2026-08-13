@@ -47,6 +47,10 @@ enum SessionSlot {
 enum RegimeCreatedBy {
   AGENT
   USER_EDITED
+  // LLM Reliability & Failure Handling: assigned from a Preset when Flow A
+  // exhausts its retries — distinguishes a fallback regime from a genuine
+  // LLM draft in the audit trail.
+  PRESET_FALLBACK
 }
 
 enum RegimeStatus {

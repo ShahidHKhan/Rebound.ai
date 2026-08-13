@@ -133,6 +133,18 @@ export default function OnboardingPage() {
               </Link>
             </p>
           </>
+        ) : status === "FAILED" && jobStatus.data?.resultRegimeId ? (
+          <>
+            <p>
+              We couldn&apos;t draft a personalized regime right now, so we&apos;ve started you on a general
+              starter plan instead — you can switch to a personalized one later.
+            </p>
+            <p>
+              <Link href={`/regime/${jobStatus.data.resultRegimeId}`} style={{ color: "#2563eb", textDecoration: "underline" }}>
+                Review your starter regime →
+              </Link>
+            </p>
+          </>
         ) : status === "FAILED" ? (
           <>
             <p>We couldn&apos;t generate a regime right now. This has been flagged for review.</p>

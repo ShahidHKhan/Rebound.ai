@@ -2,14 +2,9 @@ import { TRPCError } from "@trpc/server";
 import type { PrismaClient } from "@rebound/db";
 import { z } from "zod";
 
+import { startOfToday } from "../date-utils";
 import { computeCurrentStreak } from "../streak";
 import { protectedProcedure, router } from "../trpc";
-
-function startOfToday(): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-}
 
 async function getCurrentStreak(userId: string, prisma: PrismaClient): Promise<number> {
   const completedSessions = await prisma.workoutSession.findMany({

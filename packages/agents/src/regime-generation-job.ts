@@ -2,6 +2,7 @@ import { prisma } from "@rebound/db";
 
 import { draftAndPersistRegime } from "./onboarding";
 import type { OnboardingSubmission } from "./onboarding";
+import { assignFallbackPreset } from "./preset-fallback";
 
 const MAX_ATTEMPTS = 3;
 
@@ -10,9 +11,13 @@ function sleep(ms: number) {
 }
 
 // Backs Flow A's async-job architecture (System Design > v1 Beta): retries
-// with backoff, updates RegimeGenerationJob as it goes, marks failed
-// (flagged for admin review) once attempts are exhausted. Preset fallback
-// is deferred — no Preset data has been seeded yet.
+// with backoff, updates RegimeGenerationJob as it goes. Once attempts are
+// exhausted, falls back to the closest-matching Preset (LLM Reliability &
+// Failure Handling) so onboarding still completes same-day — status stays
+// FAILED (keeps this in the admin panel's flagged-users queue) but
+// resultRegimeId points at the preset-derived regime, exactly like the
+// System Design sequence diagram's "status: failed + preset ... + regime
+// draft" branch.
 export async function runRegimeGenerationJob(
   jobId: string,
   userId: string,
@@ -30,10 +35,31 @@ export async function runRegimeGenerationJob(
       const message = error instanceof Error ? error.message : String(error);
 
       if (attempt === MAX_ATTEMPTS) {
-        await prisma.regimeGenerationJob.update({
-          where: { id: jobId },
-          data: { status: "FAILED", retryCount: attempt, error: message },
-        });
+        const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+        try {
+          const { regimeId, presetId } = await assignFallbackPreset(userId, user.riskTier);
+          await prisma.regimeGenerationJob.update({
+            where: { id: jobId },
+            data: {
+              status: "FAILED",
+              retryCount: attempt,
+              error: message,
+              resultRegimeId: regimeId,
+              fallbackPresetId: presetId,
+            },
+          });
+        } catch (fallbackError) {
+          const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+          await prisma.regimeGenerationJob.update({
+            where: { id: jobId },
+            data: {
+              status: "FAILED",
+              retryCount: attempt,
+              error: `${message} | preset fallback also failed: ${fallbackMessage}`,
+            },
+          });
+        }
         return;
       }
 

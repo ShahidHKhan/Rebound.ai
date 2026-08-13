@@ -8,6 +8,8 @@ export type { OnboardingSubmission, OnboardingResult } from "./onboarding";
 export { screenOnboarding, draftAndPersistRegime, upsertUserForOnboarding } from "./onboarding";
 export type { ScreeningResult } from "./onboarding";
 export { runRegimeGenerationJob } from "./regime-generation-job";
+export { assignFallbackPreset } from "./preset-fallback";
+export type { FallbackResult } from "./preset-fallback";
 export { proposeAdjustment } from "./flow-b";
 export type { AdjustmentContext, ProposedAdjustment } from "./flow-b";
 export { runFlowBForUser } from "./flow-b-runner";

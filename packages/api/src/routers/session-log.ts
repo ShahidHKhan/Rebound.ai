@@ -1,8 +1,10 @@
+import { TRPCError } from "@trpc/server";
 import { applyEscalationRollback } from "@rebound/agents";
 import { checkEscalation } from "@rebound/clinical-rules";
 import type { SessionLogEntry } from "@rebound/clinical-rules";
 import { z } from "zod";
 
+import { startOfToday } from "../date-utils";
 import { protectedProcedure, router } from "../trpc";
 
 export const sessionLogRouter = router({
@@ -18,6 +20,17 @@ export const sessionLogRouter = router({
       const activeRegime = await ctx.prisma.regime.findFirstOrThrow({
         where: { userId: ctx.userId, status: "ACTIVE" },
       });
+
+      // Daily Session Structure: stat logging happens once daily. The
+      // @@unique([userId, loggedAt]) constraint doesn't actually enforce
+      // this (loggedAt defaults to the exact submission instant), so it has
+      // to be checked explicitly here.
+      const existingLogToday = await ctx.prisma.sessionLog.findFirst({
+        where: { userId: ctx.userId, loggedAt: { gte: startOfToday() } },
+      });
+      if (existingLogToday) {
+        throw new TRPCError({ code: "CONFLICT", message: "You've already logged today." });
+      }
 
       const user = await ctx.prisma.user.findUniqueOrThrow({ where: { id: ctx.userId } });
 
