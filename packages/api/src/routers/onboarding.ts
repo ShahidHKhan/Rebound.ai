@@ -31,12 +31,11 @@ const onboardingSubmissionSchema = z.object({
   targetMovement: z.string().min(1).max(200),
   symptomsText: z.string().max(750),
   lifestyleContextText: z.string().max(750),
-  // Daily Session Structure: morning "on wake", evening "at sunset". Both
-  // optional — regime.activate falls back to 7am/6pm placeholders when
-  // either is missing, so skipping these doesn't block onboarding.
+  // Daily Session Structure: morning "on wake", evening at a user-picked
+  // time. Both optional — regime.activate falls back to 7am/6pm placeholders
+  // when either is missing, so skipping these doesn't block onboarding.
   wakeTimeMinutes: z.number().int().min(0).max(1439).optional(),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
+  eveningTimeMinutes: z.number().int().min(0).max(1439).optional(),
 });
 
 export const onboardingRouter = router({

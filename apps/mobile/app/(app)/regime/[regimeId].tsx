@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -54,6 +54,7 @@ const SLOT_OPTIONS: { value: SessionSlot; label: string }[] = [
 ];
 
 export default function RegimeReviewScreen() {
+  const router = useRouter();
   const { regimeId } = useLocalSearchParams<{ regimeId: string }>();
   const regimeQuery = trpc.regime.getById.useQuery({ regimeId });
   const [exercises, setExercises] = useState<EditableExercise[] | null>(null);
@@ -88,6 +89,7 @@ export default function RegimeReviewScreen() {
       <View style={shared.centeredPage}>
         <Text style={shared.title}>Regime activated</Text>
         <Text>{activated.exerciseCount} exercises are now live, split across morning and evening sessions.</Text>
+        <Button label="Go to today's sessions →" onPress={() => router.replace("/")} />
       </View>
     );
   }
@@ -104,6 +106,7 @@ export default function RegimeReviewScreen() {
     return (
       <View style={shared.centeredPage}>
         <Text style={shared.error}>Couldn&apos;t load this regime: {regimeQuery.error.message}</Text>
+        <Button label="← Back" variant="secondary" onPress={() => router.back()} />
       </View>
     );
   }

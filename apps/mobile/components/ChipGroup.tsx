@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { shared } from "../lib/styles";
 
@@ -10,25 +10,36 @@ export function ChipGroup<T extends string>({
   options,
   selected,
   onToggle,
+  scrollable,
 }: {
   options: { value: T; label: string }[];
   selected: T[];
   onToggle: (value: T) => void;
+  // For long option lists (e.g. every half-hour in a day) — renders as a
+  // bounded, horizontally-scrolling box instead of an unbounded wrapping
+  // grid, so it doesn't push the rest of the form down the page.
+  scrollable?: boolean;
 }) {
-  return (
-    <View style={shared.row}>
-      {options.map((option) => {
-        const isSelected = selected.includes(option.value);
-        return (
-          <Pressable
-            key={option.value}
-            style={[shared.chip, isSelected && shared.chipSelected]}
-            onPress={() => onToggle(option.value)}
-          >
-            <Text style={isSelected ? shared.chipTextSelected : shared.chipText}>{option.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+  const chips = options.map((option) => {
+    const isSelected = selected.includes(option.value);
+    return (
+      <Pressable
+        key={option.value}
+        style={[shared.chip, isSelected && shared.chipSelected]}
+        onPress={() => onToggle(option.value)}
+      >
+        <Text style={isSelected ? shared.chipTextSelected : shared.chipText}>{option.label}</Text>
+      </Pressable>
+    );
+  });
+
+  if (scrollable) {
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={shared.chipScrollBox}>
+        <View style={shared.chipScrollRow}>{chips}</View>
+      </ScrollView>
+    );
+  }
+
+  return <View style={shared.row}>{chips}</View>;
 }

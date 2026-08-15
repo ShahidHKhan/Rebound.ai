@@ -1,7 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { validateRegime, validateStructure } from "@rebound/clinical-rules";
 import type { DraftRegime } from "@rebound/clinical-rules";
-import * as SunCalc from "suncalc";
 import { z } from "zod";
 
 import { protectedProcedure, router } from "../trpc";
@@ -120,9 +119,9 @@ export const regimeRouter = router({
         include: { exerciseList: true },
       });
 
-      // Daily Session Structure: morning "on wake", evening "at sunset".
-      // Falls back to the original 7am/6pm placeholders when the user
-      // hasn't supplied a wake time / location at onboarding.
+      // Daily Session Structure: morning "on wake", evening at a user-picked
+      // time. Falls back to the original 7am/6pm placeholders when the user
+      // hasn't supplied either at onboarding.
       const morningTime = new Date(today);
       if (user.wakeTimeMinutes != null) {
         morningTime.setHours(Math.floor(user.wakeTimeMinutes / 60), user.wakeTimeMinutes % 60, 0, 0);
@@ -130,18 +129,10 @@ export const regimeRouter = router({
         morningTime.setHours(7, 0, 0, 0);
       }
 
-      // sunset can genuinely be null near the poles (24h daylight/darkness) —
-      // falls back to the placeholder the same as "no location supplied".
-      const computedSunset =
-        user.latitude != null && user.longitude != null
-          ? SunCalc.getTimes(today, user.latitude, user.longitude).sunset
-          : null;
-
-      let eveningTime: Date;
-      if (computedSunset != null) {
-        eveningTime = computedSunset;
+      const eveningTime = new Date(today);
+      if (user.eveningTimeMinutes != null) {
+        eveningTime.setHours(Math.floor(user.eveningTimeMinutes / 60), user.eveningTimeMinutes % 60, 0, 0);
       } else {
-        eveningTime = new Date(today);
         eveningTime.setHours(18, 0, 0, 0);
       }
 

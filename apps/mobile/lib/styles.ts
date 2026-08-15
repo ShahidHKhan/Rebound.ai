@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 
 export const shared = StyleSheet.create({
-  page: { flex: 1, padding: 24, gap: 12 },
+  page: { flexGrow: 1, padding: 24, gap: 12 },
   centeredPage: { flex: 1, justifyContent: "center", padding: 24, gap: 12 },
   title: { fontSize: 28, fontWeight: "700", marginBottom: 4 },
   subtitle: { fontSize: 20, fontWeight: "600" },
@@ -27,4 +27,6 @@ export const shared = StyleSheet.create({
   chipSelected: { backgroundColor: "#2563eb", borderColor: "#2563eb" },
   chipText: { color: "#111" },
   chipTextSelected: { color: "#fff" },
+  chipScrollBox: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, maxHeight: 56 },
+  chipScrollRow: { flexDirection: "row", gap: 8, padding: 8, alignItems: "center" },
 });

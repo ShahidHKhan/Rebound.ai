@@ -1,16 +1,14 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
-import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
-import type { inferRouterOutputs } from "@trpc/server";
-
-import type { AppRouter } from "@rebound/api";
+import * as Notifications from "expo-notifications";
+import { useEffect, useState } from "react";
+import { AppState, ScrollView, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/Button";
 import { trpc } from "../../lib/trpc";
 import { shared } from "../../lib/styles";
+import { syncDailyNotifications, type TodayData } from "../../lib/notifications";
 
-type TodayData = inferRouterOutputs<AppRouter>["workoutSession"]["today"];
 type SessionSlot = "MORNING" | "EVENING";
 
 function SessionCard({
@@ -76,6 +74,30 @@ export default function HomeScreen() {
     },
   });
 
+  useEffect(() => {
+    if (today.data === undefined) return; // still loading — don't cancel anything yet
+    const sessions = today.data.regime ? today.data.sessions : [];
+
+    // TEMPORARY debug aid for verifying the notification feature in Appetize
+    // (no way to confirm real OS-level delivery there) — remove once this
+    // has been confirmed working on a real device.
+    const syncAndLog = () =>
+      syncDailyNotifications(sessions).then(() => {
+        if (__DEV__) {
+          Notifications.getAllScheduledNotificationsAsync().then((scheduled) =>
+            console.log("[notifications] currently scheduled:", scheduled)
+          );
+        }
+      });
+
+    syncAndLog();
+
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") syncAndLog();
+    });
+    return () => subscription.remove();
+  }, [today.data]);
+
   if (today.isLoading) {
     return (
       <View style={shared.centeredPage}>
@@ -97,7 +119,7 @@ export default function HomeScreen() {
       <View style={shared.centeredPage}>
         <Text style={shared.title}>Rebound.ai</Text>
         <Text>You don&apos;t have an active regime yet.</Text>
-        <Link href="/onboarding" style={shared.link}>
+        <Link href="/onboarding" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
           Start onboarding →
         </Link>
         <Button label="Sign out" variant="secondary" onPress={() => signOut()} />

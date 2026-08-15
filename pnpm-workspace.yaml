@@ -14,3 +14,9 @@ allowBuilds:
   utf-8-validate: false
   esbuild: true
   dtrace-provider: false
+minimumReleaseAgeExclude:
+  - expo-dev-client@57.0.12
+  - expo-dev-launcher@57.0.12
+  - expo-dev-menu@57.0.12
+  - expo-constants@57.0.11
+  - expo-notifications@57.0.11

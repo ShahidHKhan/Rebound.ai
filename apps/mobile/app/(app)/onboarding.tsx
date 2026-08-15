@@ -1,5 +1,4 @@
 import { Link, useRouter } from "expo-router";
-import * as Location from "expo-location";
 import { useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 
@@ -8,7 +7,7 @@ import { trpc } from "../../lib/trpc";
 import { shared } from "../../lib/styles";
 import { Button } from "../../components/Button";
 
-function formatWakeTime(minutes: number): string {
+function formatTimeOfDay(minutes: number): string {
   const hour = Math.floor(minutes / 60);
   const minute = minutes % 60;
   const period = hour < 12 ? "AM" : "PM";
@@ -16,11 +15,12 @@ function formatWakeTime(minutes: number): string {
   return `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`;
 }
 
-// No native time picker without another dependency — preset chips instead,
-// same pattern as every other enum field on this screen.
-const WAKE_TIME_OPTIONS = [360, 390, 420, 450, 480, 510].map((minutes) => ({
+// No native time picker without another dependency — a scrollable chip list
+// instead, same pattern as every other enum field on this screen. Covers
+// the full day in 30-minute increments (48 options).
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => i * 30).map((minutes) => ({
   value: String(minutes),
-  label: formatWakeTime(minutes),
+  label: formatTimeOfDay(minutes),
 }));
 
 type GoalType = "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
@@ -76,12 +76,10 @@ export default function OnboardingScreen() {
   const [symptomsText, setSymptomsText] = useState("");
   const [lifestyleContextText, setLifestyleContextText] = useState("");
 
-  // Daily Session Structure: morning "on wake", evening "at sunset" — both
-  // optional. wakeTimeMinutes pre-fills to 7:00 AM; location has no default
-  // since it needs an explicit OS permission grant.
+  // Daily Session Structure: morning "on wake", evening at a user-picked
+  // time — both optional, pre-filled to sensible defaults (7:00 AM / 6:00 PM).
   const [wakeTimeMinutes, setWakeTimeMinutes] = useState<string[]>(["420"]);
-  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "granted" | "denied">("idle");
+  const [eveningTimeMinutes, setEveningTimeMinutes] = useState<string[]>(["1080"]);
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [redFlagReasons, setRedFlagReasons] = useState<string[] | null>(null);
@@ -112,18 +110,6 @@ export default function OnboardingScreen() {
     setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   }
 
-  async function requestLocation() {
-    setLocationStatus("requesting");
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      setLocationStatus("denied");
-      return;
-    }
-    const position = await Location.getCurrentPositionAsync({});
-    setLocationCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-    setLocationStatus("granted");
-  }
-
   function handleSubmit() {
     submit.mutate({
       answers: {
@@ -144,14 +130,14 @@ export default function OnboardingScreen() {
       symptomsText,
       lifestyleContextText,
       wakeTimeMinutes: wakeTimeMinutes[0] ? Number(wakeTimeMinutes[0]) : undefined,
-      latitude: locationCoords?.lat,
-      longitude: locationCoords?.lng,
+      eveningTimeMinutes: eveningTimeMinutes[0] ? Number(eveningTimeMinutes[0]) : undefined,
     });
   }
 
   if (redFlagReasons) {
     return (
       <ScrollView contentContainerStyle={shared.page}>
+        <Button label="← Back" variant="secondary" onPress={() => router.back()} />
         <Text style={shared.title}>Let&apos;s get you to a professional first</Text>
         <Text>
           Based on your answers, Rebound.ai isn&apos;t the right starting point right now. Please see a doctor or
@@ -169,6 +155,7 @@ export default function OnboardingScreen() {
 
     return (
       <View style={shared.centeredPage}>
+        <Button label="← Back" variant="secondary" onPress={() => router.back()} />
         <Text style={shared.title}>Building your regime</Text>
         {status === "COMPLETE" && jobStatus.data?.resultRegimeId ? (
           <>
@@ -195,6 +182,7 @@ export default function OnboardingScreen() {
 
   return (
     <ScrollView contentContainerStyle={shared.page}>
+      <Button label="← Back" variant="secondary" onPress={() => router.back()} />
       <Text style={shared.title}>Tell us about you</Text>
 
       <Text style={shared.label}>Age</Text>
@@ -249,25 +237,19 @@ export default function OnboardingScreen() {
 
       <Text style={shared.label}>Preferred wake time (morning session)</Text>
       <ChipGroup
-        options={WAKE_TIME_OPTIONS}
+        options={TIME_OPTIONS}
         selected={wakeTimeMinutes}
         onToggle={(v) => toggleSingle(setWakeTimeMinutes, v)}
+        scrollable
       />
 
-      <Text style={shared.label}>
-        Evening session timing (optional — anchors it to local sunset instead of a fixed time)
-      </Text>
-      {locationStatus === "granted" ? (
-        <Text>Location shared — evening session will follow sunset.</Text>
-      ) : (
-        <Button
-          label={locationStatus === "requesting" ? "Requesting…" : "Share my location"}
-          variant="secondary"
-          onPress={requestLocation}
-          disabled={locationStatus === "requesting"}
-        />
-      )}
-      {locationStatus === "denied" && <Text>Location unavailable — evening session will default to 6pm.</Text>}
+      <Text style={shared.label}>Preferred evening session time</Text>
+      <ChipGroup
+        options={TIME_OPTIONS}
+        selected={eveningTimeMinutes}
+        onToggle={(v) => toggleSingle(setEveningTimeMinutes, v)}
+        scrollable
+      />
 
       <Button label={submit.isPending ? "Submitting…" : "Continue"} onPress={handleSubmit} disabled={submit.isPending} />
       {submit.isError && <Text style={shared.error}>{submit.error.message}</Text>}

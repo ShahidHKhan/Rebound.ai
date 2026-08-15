@@ -37,6 +37,12 @@
         {
           "locationWhenInUsePermission": "Rebound.ai uses your location to schedule your evening session around local sunset."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2563eb"
+        }
       ]
     ],
     "extra": {
