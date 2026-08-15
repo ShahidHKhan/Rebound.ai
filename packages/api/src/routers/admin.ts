@@ -47,7 +47,17 @@ export const adminRouter = router({
     flaggedLogs.forEach((l) => record(l.userId, "made_it_worse_flag", l.loggedAt));
     failedJobs.forEach((j) => record(j.userId, "regime_generation_failed", j.createdAt));
 
-    const users = await ctx.prisma.user.findMany({ where: { id: { in: [...byUser.keys()] } } });
+    const users = await ctx.prisma.user.findMany({
+      where: { id: { in: [...byUser.keys()] } },
+      select: {
+        id: true,
+        goalType: true,
+        riskTier: true,
+        manualHold: true,
+        manualHoldReason: true,
+        createdAt: true,
+      },
+    });
 
     return users
       .map((user) => {

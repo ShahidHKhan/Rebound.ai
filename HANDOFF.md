@@ -47,6 +47,8 @@ packages/agents Anthropic SDK orchestration — Flow A, Flow B, classifiers, job
 - **Known architectural nuance, not a gap**: `applyEscalationRollback` (called from `sessionLog.create`) is a `packages/agents` helper, so its actual rollback write goes through the *privileged* connection, not the RLS-scoped `ctx.prisma` — correct and intentional (same "system action on behalf of an already-verified user" category as Flow B), but worth knowing if you're tracing why not every write inside a `protectedProcedure` uses the transaction client.
 - **Deliberately deferred**: Clerk JWT custom claims for admin status (would remove the one extra self-lookup query per admin request, but needs Clerk dashboard configuration this session couldn't do). `FORCE ROW LEVEL SECURITY` (not needed — `rebound_app` isn't the table owner, so plain `ENABLE` already restricts it).
 
+**Manual Clerk Dashboard follow-ups (2026-08-15 security pass, not code-fixable)**: session cookie hardening, login rate limiting, and bot protection on sign-up are all fully delegated to Clerk (there's no custom auth surface in this codebase to add rate-limiting code to) — these are Dashboard toggles under Clerk's "Attack protection" settings, not something a code change can address. Also still pending: registering the `/api/webhooks/clerk` endpoint (see "Data deletion" below) in Clerk Dashboard > Webhooks, subscribed to `user.deleted`, and copying its signing secret into `CLERK_WEBHOOK_SECRET`.
+
 **`packages/clinical-rules`** (pure functions, no I/O, fully unit tested):
 - `checkRedFlags` — structured red-flag screen
 - `determineRiskTier` — **provisional policy**, not exactly PRD-specified (see Known Gaps below)

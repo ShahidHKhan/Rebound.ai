@@ -17,27 +17,43 @@ export interface OnboardingSubmission {
   eveningTimeMinutes?: number;
 }
 
-export interface ScreeningResult {
-  flagged: boolean;
-  reasons: string[];
-}
+export type ScreeningResult =
+  | { flagged: false; crisisFlagged: false }
+  | { flagged: true; crisisFlagged: false; reasons: string[] }
+  // Crisis takes priority over physical red flags when both are present —
+  // the caller should show crisis resources, not the generic "see a
+  // doctor" message.
+  | { flagged: boolean; crisisFlagged: true; crisisReasons: string[] };
 
 export type OnboardingResult =
+  | { status: "crisis_detected"; reasons: string[] }
   | { status: "red_flagged"; reasons: string[] }
   | { status: "regime_drafted"; regimeId: string; exerciseCount: number };
 
-// The synchronous part of Flow A: both red-flag gates, fast enough to run
-// inline before the client gets a response (System Design > Flow A sequence).
+// The synchronous part of Flow A: both red-flag gates plus the crisis/
+// self-harm check, fast enough to run inline before the client gets a
+// response (System Design > Flow A sequence). Only the free-text screen can
+// surface a crisis signal — the structured checkboxes are all physical.
 export async function screenOnboarding(submission: OnboardingSubmission): Promise<ScreeningResult> {
   const structuredScreen = checkRedFlags(submission.answers);
 
   const freeText = `${submission.symptomsText}\n\n${submission.lifestyleContextText}`.trim();
   const freeTextScreen = freeText
     ? await classifyFreeTextRedFlags(freeText)
-    : { flagged: false, reasons: [] };
+    : { flagged: false, reasons: [], crisisFlagged: false, crisisReasons: [] };
+
+  if (freeTextScreen.crisisFlagged) {
+    return { flagged: structuredScreen.flagged || freeTextScreen.flagged, crisisFlagged: true, crisisReasons: freeTextScreen.crisisReasons };
+  }
+
+  const flagged = structuredScreen.flagged || freeTextScreen.flagged;
+  if (!flagged) {
+    return { flagged: false, crisisFlagged: false };
+  }
 
   return {
-    flagged: structuredScreen.flagged || freeTextScreen.flagged,
+    flagged: true,
+    crisisFlagged: false,
     reasons: [...structuredScreen.reasons, ...freeTextScreen.reasons],
   };
 }
@@ -140,6 +156,9 @@ export async function runOnboarding(
   submission: OnboardingSubmission
 ): Promise<OnboardingResult> {
   const screening = await screenOnboarding(submission);
+  if (screening.crisisFlagged) {
+    return { status: "crisis_detected", reasons: screening.crisisReasons };
+  }
   if (screening.flagged) {
     return { status: "red_flagged", reasons: screening.reasons };
   }

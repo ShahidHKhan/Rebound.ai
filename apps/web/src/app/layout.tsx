@@ -1,6 +1,7 @@
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 
 import { TRPCProvider } from "@/lib/trpc/Provider";
 
@@ -43,6 +44,23 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </SignedIn>
           </header>
           <TRPCProvider>{children}</TRPCProvider>
+          <footer
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "1rem",
+              padding: "2rem",
+              fontSize: "0.85rem",
+              color: "#666",
+            }}
+          >
+            <Link href="/privacy" style={{ color: "#666" }}>
+              Privacy Policy
+            </Link>
+            <Link href="/terms" style={{ color: "#666" }}>
+              Terms of Service
+            </Link>
+          </footer>
         </body>
       </html>
     </ClerkProvider>

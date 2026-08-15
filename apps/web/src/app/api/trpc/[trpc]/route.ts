@@ -6,11 +6,20 @@ import { appRouter, createInnerContext } from "@rebound/api";
 // apps/mobile's Expo dev server (and its `expo start --web` preview) is a
 // genuinely different origin, so the browser enforces CORS for it — the web
 // app's own same-origin requests are unaffected either way (browsers don't
-// apply CORS to same-origin calls). Wildcard is fine here since auth is a
-// Bearer token (mobile) or same-origin cookies (web), never
-// credentialed-cross-origin; tighten to known origins before a real deploy.
-function withCors(response: Response) {
-  response.headers.set("Access-Control-Allow-Origin", "*");
+// apply CORS to same-origin calls). Auth is a Bearer token (mobile) or
+// same-origin cookies (web), never credentialed-cross-origin, so this only
+// ever needs to allow known dev/preview origins, never a wildcard.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "http://localhost:8081")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+function withCors(response: Response, req: Request) {
+  const origin = req.headers.get("origin");
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Vary", "Origin");
+  }
   response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   return response;
@@ -26,11 +35,11 @@ async function handler(req: Request) {
       return createInnerContext({ userId });
     },
   });
-  return withCors(response);
+  return withCors(response, req);
 }
 
-export function OPTIONS() {
-  return withCors(new Response(null, { status: 204 }));
+export function OPTIONS(req: Request) {
+  return withCors(new Response(null, { status: 204 }), req);
 }
 
 export { handler as GET, handler as POST };

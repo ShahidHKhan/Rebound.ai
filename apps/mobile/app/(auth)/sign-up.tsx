@@ -1,10 +1,14 @@
 import { useSignUp } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, Text, TextInput, View } from "react-native";
 
 import { getClerkErrorMessage } from "../../lib/clerk-error";
 import { shared } from "../../lib/styles";
+
+// Legal pages live on apps/web (see startup-launch-checklist.md > Category A) —
+// linked out to rather than duplicated as native screens.
+const WEB_APP_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -92,6 +96,17 @@ export default function SignUpScreen() {
       <Link href="/sign-in" style={shared.link}>
         Already have an account? Sign in
       </Link>
+      <Text style={{ fontSize: 12, color: "#666", textAlign: "center" }}>
+        By signing up you agree to our{" "}
+        <Text style={shared.link} onPress={() => Linking.openURL(`${WEB_APP_URL}/terms`)}>
+          Terms of Service
+        </Text>{" "}
+        and{" "}
+        <Text style={shared.link} onPress={() => Linking.openURL(`${WEB_APP_URL}/privacy`)}>
+          Privacy Policy
+        </Text>
+        .
+      </Text>
     </View>
   );
 }

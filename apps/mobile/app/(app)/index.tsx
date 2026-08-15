@@ -11,6 +11,34 @@ import { syncDailyNotifications, type TodayData } from "../../lib/notifications"
 
 type SessionSlot = "MORNING" | "EVENING";
 
+function DeleteAccountSection() {
+  const { signOut } = useAuth();
+  const [confirming, setConfirming] = useState(false);
+
+  const deleteAccount = trpc.user.deleteMyAccount.useMutation({
+    onSuccess: () => signOut(),
+  });
+
+  if (!confirming) {
+    return <Button label="Delete my account" variant="secondary" onPress={() => setConfirming(true)} />;
+  }
+
+  return (
+    <View style={shared.card}>
+      <Text style={shared.error}>
+        This permanently deletes your account, regimes, and session history. This can&apos;t be undone.
+      </Text>
+      <Button
+        label={deleteAccount.isPending ? "Deleting…" : "Yes, permanently delete my account"}
+        disabled={deleteAccount.isPending}
+        onPress={() => deleteAccount.mutate()}
+      />
+      <Button label="Cancel" variant="secondary" onPress={() => setConfirming(false)} />
+      {deleteAccount.isError && <Text style={shared.error}>{deleteAccount.error.message}</Text>}
+    </View>
+  );
+}
+
 function SessionCard({
   slot,
   label,
@@ -123,6 +151,7 @@ export default function HomeScreen() {
           Start onboarding →
         </Link>
         <Button label="Sign out" variant="secondary" onPress={() => signOut()} />
+        <DeleteAccountSection />
       </View>
     );
   }
@@ -201,6 +230,7 @@ export default function HomeScreen() {
       </View>
 
       <Button label="Sign out" variant="secondary" onPress={() => signOut()} />
+      <DeleteAccountSection />
     </ScrollView>
   );
 }

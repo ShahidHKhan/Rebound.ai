@@ -12,6 +12,7 @@
     "setup-day4-test-users": "dotenv -e .env -- tsx scripts/setup-day4-test-users.ts"
   },
   "dependencies": {
+    "@clerk/backend": "^3.16.5",
     "@rebound/agents": "workspace:*",
     "@rebound/clinical-rules": "workspace:*",
     "@rebound/db": "workspace:*",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -61,6 +62,43 @@ function SessionCard({
   );
 }
 
+function DeleteAccountSection() {
+  const { signOut } = useClerk();
+  const [confirming, setConfirming] = useState(false);
+
+  const deleteAccount = trpc.user.deleteMyAccount.useMutation({
+    onSuccess: () => signOut({ redirectUrl: "/" }),
+  });
+
+  if (!confirming) {
+    return (
+      <button type="button" onClick={() => setConfirming(true)} style={{ color: "#b91c1c" }}>
+        Delete my account
+      </button>
+    );
+  }
+
+  return (
+    <div>
+      <p role="alert">
+        This permanently deletes your account, regimes, and session history. This can&apos;t be undone.
+      </p>
+      <button
+        type="button"
+        disabled={deleteAccount.isPending}
+        onClick={() => deleteAccount.mutate()}
+        style={{ color: "#b91c1c" }}
+      >
+        {deleteAccount.isPending ? "Deleting…" : "Yes, permanently delete my account"}
+      </button>{" "}
+      <button type="button" onClick={() => setConfirming(false)}>
+        Cancel
+      </button>
+      {deleteAccount.isError && <p role="alert">{deleteAccount.error.message}</p>}
+    </div>
+  );
+}
+
 export default function Home() {
   const utils = trpc.useUtils();
   const today = trpc.workoutSession.today.useQuery();
@@ -107,6 +145,7 @@ export default function Home() {
             Start onboarding →
           </Link>
         </p>
+        <DeleteAccountSection />
       </main>
     );
   }
@@ -193,6 +232,8 @@ export default function Home() {
           </form>
         )}
       </div>
+
+      <DeleteAccountSection />
     </main>
   );
 }

@@ -9,6 +9,8 @@ const CLASSIFIER_MODEL = "claude-haiku-4-5-20251001";
 export interface FreeTextClassification {
   flagged: boolean;
   reasons: string[];
+  crisisFlagged: boolean;
+  crisisReasons: string[];
 }
 
 export async function classifyFreeTextRedFlags(freeText: string): Promise<FreeTextClassification> {

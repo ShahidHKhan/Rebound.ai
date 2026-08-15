@@ -42,6 +42,10 @@ export const onboardingRouter = router({
   submit: protectedProcedure.input(onboardingSubmissionSchema).mutation(async ({ ctx, input }) => {
     const screening = await screenOnboarding(input);
 
+    if (screening.crisisFlagged) {
+      return { status: "crisis_detected" as const, reasons: screening.crisisReasons };
+    }
+
     if (screening.flagged) {
       return { status: "red_flagged" as const, reasons: screening.reasons };
     }

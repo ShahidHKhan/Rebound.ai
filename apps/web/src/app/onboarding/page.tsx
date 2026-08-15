@@ -67,10 +67,13 @@ export default function OnboardingPage() {
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [redFlagReasons, setRedFlagReasons] = useState<string[] | null>(null);
+  const [crisisDetected, setCrisisDetected] = useState(false);
 
   const submit = trpc.onboarding.submit.useMutation({
     onSuccess: (result) => {
-      if (result.status === "red_flagged") {
+      if (result.status === "crisis_detected") {
+        setCrisisDetected(true);
+      } else if (result.status === "red_flagged") {
         setRedFlagReasons(result.reasons);
       } else {
         setJobId(result.jobId);
@@ -108,6 +111,28 @@ export default function OnboardingPage() {
       wakeTimeMinutes: wakeTime ? wakeHours * 60 + wakeMinutes : undefined,
       eveningTimeMinutes: eveningTime ? eveningHours * 60 + eveningMinutes : undefined,
     });
+  }
+
+  if (crisisDetected) {
+    return (
+      <main style={pageStyle}>
+        <h1>You&apos;re not alone — help is available</h1>
+        <p>
+          Rebound.ai isn&apos;t equipped to support what you&apos;ve described, and we want to make sure you can
+          reach someone who can help right now.
+        </p>
+        <ul>
+          <li>
+            <strong>988 Suicide &amp; Crisis Lifeline</strong> — call or text 988 (US), available 24/7.
+          </li>
+          <li>
+            <strong>Crisis Text Line</strong> — text HOME to 741741 (US), available 24/7.
+          </li>
+          <li>If you&apos;re in immediate danger, call 911 or your local emergency number.</li>
+        </ul>
+        <p>Please reach out to one of these resources or a trusted person before continuing.</p>
+      </main>
+    );
   }
 
   if (redFlagReasons) {

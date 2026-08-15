@@ -3,6 +3,7 @@ import { healthRouter } from "./routers/health";
 import { onboardingRouter } from "./routers/onboarding";
 import { regimeRouter } from "./routers/regime";
 import { sessionLogRouter } from "./routers/session-log";
+import { userRouter } from "./routers/user";
 import { workoutSessionRouter } from "./routers/workout-session";
 import { router } from "./trpc";
 
@@ -13,6 +14,7 @@ export const appRouter = router({
   sessionLog: sessionLogRouter,
   workoutSession: workoutSessionRouter,
   admin: adminRouter,
+  user: userRouter,
 });
 
 export type AppRouter = typeof appRouter;

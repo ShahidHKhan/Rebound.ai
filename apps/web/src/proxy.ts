@@ -3,9 +3,17 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 // Named "proxy.ts" per the Next.js 16 rename of middleware.ts -> proxy.ts;
 // the exported function is still what Clerk calls "middleware" in its own docs.
 //
-// Everything is protected by default except sign-in/sign-up and /api routes
-// (tRPC procedures and cron routes already enforce their own auth).
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/api(.*)"]);
+// Everything is protected by default except sign-in/sign-up, /api routes
+// (tRPC procedures and cron routes already enforce their own auth), and the
+// legal pages (must be reachable without an account, e.g. by regulators or
+// prospective users).
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api(.*)",
+  "/privacy",
+  "/terms",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
