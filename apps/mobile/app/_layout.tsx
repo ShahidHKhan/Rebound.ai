@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AccessibilityProvider } from "../lib/accessibility";
 import { tokenCache } from "../lib/clerk-token-cache";
 import { TRPCProvider } from "../lib/trpc";
 
@@ -17,11 +18,13 @@ if (!CLERK_PUBLISHABLE_KEY) {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
-        <TRPCProvider>
-          <Slot />
-        </TRPCProvider>
-      </ClerkProvider>
+      <AccessibilityProvider>
+        <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
+          <TRPCProvider>
+            <Slot />
+          </TRPCProvider>
+        </ClerkProvider>
+      </AccessibilityProvider>
     </SafeAreaProvider>
   );
 }

@@ -4,7 +4,7 @@ import { ScrollView, Text, TextInput, View } from "react-native";
 
 import { ChipGroup } from "../../components/ChipGroup";
 import { trpc } from "../../lib/trpc";
-import { shared } from "../../lib/styles";
+import { useSharedStyles } from "../../lib/styles";
 import { Button } from "../../components/Button";
 
 function formatTimeOfDay(minutes: number): string {
@@ -66,6 +66,7 @@ const RED_FLAG_OPTIONS: { value: RedFlagKey; label: string }[] = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const shared = useSharedStyles();
 
   const [age, setAge] = useState("");
   const [goalType, setGoalType] = useState<GoalType[]>(["GENERAL_FITNESS"]);

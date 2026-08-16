@@ -8,7 +8,7 @@ import type { AppRouter } from "@rebound/api";
 import { Button } from "../../../components/Button";
 import { ChipGroup } from "../../../components/ChipGroup";
 import { trpc } from "../../../lib/trpc";
-import { shared } from "../../../lib/styles";
+import { useSharedStyles } from "../../../lib/styles";
 
 type RegimeData = inferRouterOutputs<AppRouter>["regime"]["getById"];
 type SessionSlot = "MORNING" | "EVENING";
@@ -55,6 +55,7 @@ const SLOT_OPTIONS: { value: SessionSlot; label: string }[] = [
 
 export default function RegimeReviewScreen() {
   const router = useRouter();
+  const shared = useSharedStyles();
   const { regimeId } = useLocalSearchParams<{ regimeId: string }>();
   const regimeQuery = trpc.regime.getById.useQuery({ regimeId });
   const [exercises, setExercises] = useState<EditableExercise[] | null>(null);

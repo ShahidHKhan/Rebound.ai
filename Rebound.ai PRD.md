@@ -4,7 +4,7 @@
 
 *What we're building and what success looks like. Include 2-3 measurable objectives.*
 
-AI-powered physical therapy app that observes a user's pain, mobility, and strength on a recurring basis and recursively adjusts their workout/stretching regime. Success is defined as measurable improvement in a user's self-reported pain and mobility/strength scores on their target movement(s) over time, without a corresponding increase in adverse events (re-injury, pain spikes).
+AI-powered recovery and performance app built for athletes — observes a user's pain, mobility, and strength on a recurring basis and recursively adjusts their training/recovery regime to keep them moving toward their goal instead of sidelined by it. Success is defined as measurable improvement in a user's self-reported pain and mobility/strength scores on their target movement(s) over time, without a corresponding increase in adverse events (re-injury, pain spikes).
 
 **Objectives**
 
@@ -16,15 +16,18 @@ AI-powered physical therapy app that observes a user's pain, mobility, and stren
 
 *What problem are we solving, and what evidence tells us it's worth solving?*
 
-Physical therapy and stretching apps struggle with adherence. Users forget to do their exercises because life is busy, or they disengage because they're unsure if they're doing an exercise correctly and get discouraged by lack of visible progress. This leads people to stay injured longer, or under-recover from injuries, not because recovery is impossible but because it's hard to prioritize without structure, feedback, and accountability.
+Athletes lose training time to nagging injuries and under-recovery — not because recovery is impossible, but because it's hard to prioritize without structure, feedback, and accountability, and the existing options are either a slow, clinical PT pipeline (referral, scheduling, insurance) or generic fitness apps with no real recovery logic behind them. Physical therapy and stretching apps in general struggle with the same underlying adherence problem: users forget to do their exercises because life/training is busy, or they disengage because they're unsure if they're doing an exercise correctly and get discouraged by lack of visible progress. The result is athletes staying sidelined longer than they need to, or returning to training under-recovered and at risk of re-injury.
 
 # Intended Audience
 
 *Who is the audience / use case.*
 
-- Fitness individuals
-- Patients with Hindering Diseases (Auto-Immune Disease, etc)
-- Elderly
+- **Athletes** (amateur through competitive) — the primary audience and go-to-market focus, see Competitive Landscape & Differentiation > Brand Positioning.
+- Fitness individuals / general training population
+- Patients with Hindering Diseases (Auto-Immune Disease, etc) — still fully supported by the underlying product, just not the lead marketing angle
+- Elderly — same as above
+
+Broadening the marketed audience to athletes doesn't narrow who the safety rules protect — the Clinical Risk Framing guardrails below are written for, and still fully cover, everyone on this list.
 
 # Daily Session Structure
 
@@ -43,7 +46,7 @@ Every user gets exactly **two sessions per day**, no more, no fewer — this is 
 
 ### Why this needs its own section
 
-The app targets higher-risk populations (e.g., autoimmune disease, elderly) and includes an AI loop that adjusts a user's self-reported pain/mobility program over time. That pattern is commonly scrutinized for potential Software as a Medical Device (SaMD) classification, and it affects liability + insurance posture. Not legal advice — get legal review before launch — but the PRD needs an explicit position.
+The app is marketed primarily to athletes (see Intended Audience), but its user base spans higher-risk populations too (e.g., autoimmune disease, elderly), and it includes an AI loop that adjusts a user's self-reported pain/mobility program over time. That pattern is commonly scrutinized for potential Software as a Medical Device (SaMD) classification, and it affects liability + insurance posture. Not legal advice — get legal review before launch — but the PRD needs an explicit position.
 
 ### Decision — Pure AI automation, chosen for v1
 
@@ -299,7 +302,9 @@ This is a starting schema, not final — "regime," "session," and "exercise" nee
 - **Licensed PT review:** omitted to preserve pure automation + DTC cost structure; makes Clinical Risk Framing guardrails non-negotiable.
 - **Published outcomes:** not at v1; positioning is access/speed/cost until cohort data exists.
 
-**Positioning line:** "For pain that's real but not 'go to the hospital' real — or just everyday stiffness — get a plan that adjusts to you every week, no doctor's referral or insurance approval needed."
+**Positioning line:** "Train like an athlete, recover like one too — an AI-adjusted plan that keeps you moving toward your next PR instead of sidelined by pain, no doctor's referral or insurance approval needed."
+
+**Brand Positioning (marketing layer, not a product/architecture change).** Rebound.ai markets to athletes the way lifestyle-fitness brands (e.g., Celsius) market performance/energy products to a broad, non-clinical fitness audience — energetic, performance-and-recovery framing rather than clinical "physical therapy" framing. This is a go-to-market and copy decision, not a change to the underlying product: the Clinical Risk Framing guardrails (red-flag screening, risk tiering, change ceilings, escalation monitor) are unchanged and still fully apply to every user, including the higher-risk populations named in Intended Audience. Athletes get injured too — the same guardrails that stop an elderly user's regime from progressing too fast are exactly what should stop an athlete from re-aggravating a strain by pushing back into training too soon.
 
 # Business Model
 

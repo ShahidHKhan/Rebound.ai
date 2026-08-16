@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { getClerkErrorMessage } from "../../lib/clerk-error";
-import { shared } from "../../lib/styles";
+import { useSharedStyles } from "../../lib/styles";
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
+  const shared = useSharedStyles();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

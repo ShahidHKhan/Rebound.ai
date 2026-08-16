@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { shared } from "../lib/styles";
+import { useSharedStyles } from "../lib/styles";
 
 // React Native has no <select>/<checkbox> — this is the one toggle-button
 // primitive reused everywhere an enum or multi-select field is needed
@@ -20,6 +20,8 @@ export function ChipGroup<T extends string>({
   // grid, so it doesn't push the rest of the form down the page.
   scrollable?: boolean;
 }) {
+  const shared = useSharedStyles();
+
   const chips = options.map((option) => {
     const isSelected = selected.includes(option.value);
     return (
@@ -27,6 +29,8 @@ export function ChipGroup<T extends string>({
         key={option.value}
         style={[shared.chip, isSelected && shared.chipSelected]}
         onPress={() => onToggle(option.value)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isSelected }}
       >
         <Text style={isSelected ? shared.chipTextSelected : shared.chipText}>{option.label}</Text>
       </Pressable>

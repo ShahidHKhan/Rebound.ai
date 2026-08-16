@@ -4,8 +4,19 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 
 import { TRPCProvider } from "@/lib/trpc/Provider";
+import { LargeTextToggle } from "@/components/LargeTextToggle";
 
 import "./globals.css";
+
+// Applied before hydration so a returning user with the preference already
+// saved doesn't see a flash of normal-sized text before LargeTextToggle mounts.
+const largeTextInitScript = `
+  try {
+    if (localStorage.getItem("rebound.largeText") === "true") {
+      document.documentElement.dataset.largeText = "true";
+    }
+  } catch {}
+`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,6 +37,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <ClerkProvider>
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: largeTextInitScript }} />
+        </head>
         <body>
           <header
             style={{
@@ -36,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               gap: "1rem",
             }}
           >
+            <LargeTextToggle />
             <SignedOut>
               <SignInButton />
             </SignedOut>

@@ -6,13 +6,14 @@ import { AppState, ScrollView, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/Button";
 import { trpc } from "../../lib/trpc";
-import { shared } from "../../lib/styles";
+import { useSharedStyles } from "../../lib/styles";
 import { syncDailyNotifications, type TodayData } from "../../lib/notifications";
 
 type SessionSlot = "MORNING" | "EVENING";
 
 function DeleteAccountSection() {
   const { signOut } = useAuth();
+  const shared = useSharedStyles();
   const [confirming, setConfirming] = useState(false);
 
   const deleteAccount = trpc.user.deleteMyAccount.useMutation({
@@ -52,6 +53,8 @@ function SessionCard({
   onComplete: (workoutSessionId: string) => void;
   completing: boolean;
 }) {
+  const shared = useSharedStyles();
+
   if (!data.regime) return null;
 
   const session = data.sessions.find((s) => s.slot === slot);
@@ -83,6 +86,7 @@ function SessionCard({
 
 export default function HomeScreen() {
   const { signOut } = useAuth();
+  const shared = useSharedStyles();
   const utils = trpc.useUtils();
   const today = trpc.workoutSession.today.useQuery();
 
@@ -149,6 +153,9 @@ export default function HomeScreen() {
         <Text>You don&apos;t have an active regime yet.</Text>
         <Link href="/onboarding" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
           Start onboarding →
+        </Link>
+        <Link href="/settings" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
+          Settings
         </Link>
         <Button label="Sign out" variant="secondary" onPress={() => signOut()} />
         <DeleteAccountSection />
@@ -229,6 +236,9 @@ export default function HomeScreen() {
         )}
       </View>
 
+      <Link href="/settings" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
+        Settings
+      </Link>
       <Button label="Sign out" variant="secondary" onPress={() => signOut()} />
       <DeleteAccountSection />
     </ScrollView>
