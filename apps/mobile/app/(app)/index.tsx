@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
-import * as Notifications from "expo-notifications";
 import { useEffect, useState } from "react";
 import { AppState, ScrollView, Text, TextInput, View } from "react-native";
 
@@ -110,22 +109,10 @@ export default function HomeScreen() {
     if (today.data === undefined) return; // still loading — don't cancel anything yet
     const sessions = today.data.regime ? today.data.sessions : [];
 
-    // TEMPORARY debug aid for verifying the notification feature in Appetize
-    // (no way to confirm real OS-level delivery there) — remove once this
-    // has been confirmed working on a real device.
-    const syncAndLog = () =>
-      syncDailyNotifications(sessions).then(() => {
-        if (__DEV__) {
-          Notifications.getAllScheduledNotificationsAsync().then((scheduled) =>
-            console.log("[notifications] currently scheduled:", scheduled)
-          );
-        }
-      });
-
-    syncAndLog();
+    syncDailyNotifications(sessions);
 
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") syncAndLog();
+      if (state === "active") syncDailyNotifications(sessions);
     });
     return () => subscription.remove();
   }, [today.data]);

@@ -43,11 +43,11 @@ missing, and implement a fix. Don't change unrelated functionality."
 ## Category B: Security
 
 This is the largest and highest-stakes category, so it's split into three
-sub-sections. Go through them roughly in order: checklist first (broad
-coverage, mostly already done below), then the 20-holes audit (specific,
-common vulnerabilities — new, not yet audited), then the targeted prompt
-pack (deeper, narrower issues — new, not yet run). All are meant to be
-worked through one item at a time, testing after each fix.
+sub-sections: checklist (broad coverage), the 20-holes audit (specific,
+common vulnerabilities), then the targeted prompt pack (deeper, narrower
+issues). All three are now audited (B1 2026-08-15, B2/B3 2026-08-16) —
+see each sub-section for status and the few remaining non-code follow-ups
+(Clerk Dashboard settings, deliberately-deferred rate limiting).
 
 ### B1. Pre-Launch Security Checklist — mostly reviewed 2026-08-15
 
@@ -89,7 +89,7 @@ Source: "20 things to have Claude do before launching your app."
 "Go through item [#] from my Pre-Launch Security Checklist. Check my
 current implementation, explain any gaps, and fix them."
 
-### B2. 20 Common Vulnerabilities in Vibe-Coded Apps — TODO, not yet audited
+### B2. 20 Common Vulnerabilities in Vibe-Coded Apps — audited 2026-08-16
 
 Source: "20 security holes in your vibe-coded app." These are the holes
 that show up constantly because AI coding tools optimize for "working,"
@@ -103,21 +103,21 @@ to check, especially now that webhooks (Clerk account-deletion) exist.
 | 2 | Real API keys in frontend code | Anything in the JS bundle ships to the browser; `NEXT_PUBLIC_`/`EXPO_PUBLIC_` prefixes mean public | Only publishable keys go client-side; real keys live in edge functions or backend | ✅ Covered by B1 #1 |
 | 3 | Row level security (RLS) off | With RLS disabled, the anon key becomes a master key to read/write every user's rows | RLS on by default, policies scoped to `auth.uid()`, tested with a second account | ✅ Covered by B1 #4 |
 | 4 | Permission checks done in the frontend | `if (user.isAdmin)` in React stops nobody — users can edit responses or call the API directly | Every permission check runs server-side; frontend only decides what to show | ✅ Covered by B1 #6/#7 |
-| 5 | No rate limiting on endpoints | Scripts can brute-force logins or run up AI/API bills overnight | Per-user and per-IP throttles on login, signup, and expensive routes | Partial — delegated to Clerk for auth; no rate limiting confirmed on other expensive routes (e.g. AI-calling endpoints) — TODO |
+| 5 | No rate limiting on endpoints | Scripts can brute-force logins or run up AI/API bills overnight | Per-user and per-IP throttles on login, signup, and expensive routes | Partial, deliberately deferred — delegated to Clerk for auth; no rate limiting on AI-calling routes (`onboarding.submit`, Flow B cron) yet. Per the PRD's System Design notes, explicitly fine to defer until beta opens beyond a small invited/trusted cohort |
 | 6 | SQL built via string concatenation | Splicing user input into a query string allows query injection | Parameterized queries or an ORM — never string-interpolated queries | ✅ Covered by B1 #13 |
 | 7 | No server-side input validation | Client-side form validation is skippable — anyone can POST directly to the endpoint | Validate and sanitize on the server too, with a schema library like Zod | ✅ Covered by B1 #14 |
 | 8 | User content rendered as raw HTML | `dangerouslySetInnerHTML` on user text allows script injection (XSS) that steals sessions | Render user content as text; if HTML is required, sanitize with DOMPurify | ✅ Covered by B1 #15 |
 | 9 | Passwords stored in plaintext | One database leak exposes every account (and reused passwords elsewhere) | Use your auth provider's hashing (bcrypt/argon2); don't roll your own | ✅ N/A, Clerk manages |
-| 10 | Auth tokens kept in `localStorage` | Any XSS script can read `localStorage` and steal a live session token | httpOnly cookies on web, secure storage (e.g. `expo-secure-store`) on native | TODO — not yet explicitly confirmed for either app |
-| 11 | Admin panel with no auth | `/admin` or `/debug` routes protected only by obscurity | Auth-gate every internal route; strip debug endpoints from production builds | TODO — not yet audited |
+| 10 | Auth tokens kept in `localStorage` | Any XSS script can read `localStorage` and steal a live session token | httpOnly cookies on web, secure storage (e.g. `expo-secure-store`) on native | ✅ Confirmed 2026-08-16 — web uses `@clerk/nextjs` defaults (httpOnly session cookie, no custom token storage); mobile's `tokenCache` (`apps/mobile/lib/clerk-token-cache.ts`) is Clerk's recommended `expo-secure-store`-backed pattern (Keychain/Keystore, not `AsyncStorage`). The only `localStorage` usage anywhere (`apps/web/src/app/layout.tsx`) is the large-text accessibility preference, unrelated to auth |
+| 11 | Admin panel with no auth | `/admin` or `/debug` routes protected only by obscurity | Auth-gate every internal route; strip debug endpoints from production builds | ✅ Confirmed 2026-08-16 — two independent layers: route-level (`apps/web/src/proxy.ts` protects every route by default, `/admin` included) and data-level (`adminProcedure` in `packages/api/src/trpc.ts` does a DB-backed `role === "ADMIN"` check before any admin query resolves). No admin surface exists in `apps/mobile` |
 | 12 | CORS set to `*` | Lets any site on the internet call your API with a logged-in user's credentials attached | Allowlist your own origins only | ✅ Covered by B1 #18 (fixed 2026-08-15) |
-| 13 | No email verification on signup | Enables fake accounts, spam, and account-takeover via unclaimed addresses | Verify email before granting access to anything real | TODO — confirm Clerk's default email verification is actually enforced |
-| 14 | Predictable IDs with no ownership check | `/order/1001` → `/order/1002` lets someone read a stranger's data | On every fetch/mutation, confirm the resource belongs to the requesting user | TODO — B1 #7 covers query scoping generally, but IDOR-style ownership checks haven't been audited specifically |
+| 13 | No email verification on signup | Enables fake accounts, spam, and account-takeover via unclaimed addresses | Verify email before granting access to anything real | ✅ Fully confirmed 2026-08-16 — code-level: both apps' sign-up flows only call `setActive()` (creating a real session) after Clerk's `attemptEmailAddressVerification` returns `status: "complete"`, no code path skips this. Dashboard-level: user confirmed Clerk's "Verify at sign-up" toggle is ON with "Email verification code" selected (User & Authentication > Email), matching the `email_code` strategy both apps use. Worth a quick re-check on the Production instance specifically before launch — Clerk's Development/Production instances have independent settings and this was confirmed on one of them |
+| 14 | Predictable IDs with no ownership check | `/order/1001` → `/order/1002` lets someone read a stranger's data | On every fetch/mutation, confirm the resource belongs to the requesting user | ✅ Audited 2026-08-16 — every ID-taking procedure explicitly checks ownership before returning/mutating: `regime.getById`, `regime.activate`, `workoutSession.complete`, `onboarding.getJobStatus` all compare the resource's `userId` against `ctx.userId` and throw `FORBIDDEN` on mismatch. `sessionLog.create` takes no client-supplied ID at all (scoped entirely to `ctx.userId`). Backed by RLS as defense-in-depth either way |
 | 15 | Whole request body saved on updates | Lets a user smuggle `"role": "admin"` or `"is_premium": true` into their own update | Allowlist the exact fields a user can set; ignore the rest of the body | ✅ Covered by B1 #8 |
 | 16 | Webhooks with no signature check | A forged `payment_succeeded` POST can unlock premium features for free | Verify the signature against your webhook secret before processing the payload | ✅ Confirmed 2026-08-16 — `apps/web/src/app/api/webhooks/clerk/route.ts` verifies the svix signature (`svix-id`/`svix-timestamp`/`svix-signature` headers via the `svix` package) before processing any event, and rejects if `CLERK_WEBHOOK_SECRET` is unset |
-| 17 | Stack traces shown in production | Verbose errors leak file paths, table names, and library versions | Generic error messages to users; real details go to logs only | TODO — not yet audited |
+| 17 | Stack traces shown in production | Verbose errors leak file paths, table names, and library versions | Generic error messages to users; real details go to logs only | ✅ Fixed 2026-08-16 — `stack` was already dev-gated by tRPC's default (`config.isDev`, tied to `NODE_ENV`), but `message` was not: any uncaught exception (e.g. a raw Prisma error) had its `.message` forwarded to the client verbatim regardless of environment. Added an `errorFormatter` (`packages/api/src/trpc.ts`) that replaces the message with a generic string for `INTERNAL_SERVER_ERROR`-coded errors in production, logging the real cause server-side instead. Also found and fixed a live instance of exactly this: `RegimeGenerationJob.error` (raw internal exception text) was returned wholesale by `onboarding.getJobStatus` and rendered directly to the end user in `apps/web`'s onboarding page (`Details: {jobStatus.data.error}`) on a Flow A failure — `getJobStatus` now selects an explicit safe field set (`id`/`status`/`resultRegimeId`/`createdAt`/`completedAt`), and the web page's raw-error render was removed |
 | 18 | Dependencies never updated | Old packages carry public CVEs with exploit code already written | Run `npm audit`, enable Dependabot, patch on a schedule | ✅ Covered by B1 #20 |
-| 19 | No password strength or breach check | Without a minimum length and breach check, `password123` becomes a live account | Set a minimum length and enable your auth provider's leaked-password check (Supabase has one built in) | TODO — confirm Clerk's password/breach-check settings |
+| 19 | No password strength or breach check | Without a minimum length and breach check, `password123` becomes a live account | Set a minimum length and enable your auth provider's leaked-password check (Supabase has one built in) | ✅ Confirmed 2026-08-16 — user enabled minimum length + compromised-password detection under User & Authentication > Password in the Clerk Dashboard |
 | 20 | File uploads with no validation | Accepting any file risks a script being uploaded and later served/executed | Check type and size, store outside the web root or in object storage, never execute uploaded files | N/A — no file-upload feature exists yet |
 
 **Suggested prompt for this sub-section (paste the whole table above with it):**
@@ -125,14 +125,16 @@ to check, especially now that webhooks (Clerk account-deletion) exist.
 > whether my code has the problem, cite the specific file and line, and
 > give me the fix. Don't change anything yet, just report first."
 
-### B3. Security Prompt Pack (June 18) — TODO, not yet run
+**Manual Clerk Dashboard follow-ups:** email verification and password strength/breach-check both confirmed ON 2026-08-16 (see #13/#19 above; re-check the Production instance separately before launch, since Clerk's Dev/Prod settings are independent).
+
+### B3. Security Prompt Pack (June 18) — audited 2026-08-16
 
 Source: "Free Prompt Pack – App Security." Copy-paste prompts for Claude
 Code, Codex, Cursor, or similar. Run **one at a time**, testing the app
 after each change. These go deeper/narrower than B1 and B2 — good for a
 second pass once the basics are covered.
 
-**1. Close ORM-level injection vectors**
+**1. Close ORM-level injection vectors** — ✅ Confirmed clean 2026-08-16. Every raw-SQL call site (`packages/api/src/trpc.ts`'s `set_config()` calls, `packages/db/scripts/{apply-rls-policies,setup-rls-role}.ts`) is either a parameterized tagged template or a trusted infra script never fed by user/client input — RLS role setup, not request handling. No dynamic column/sort/operator selection driven by user input exists anywhere (no generic "sort by field" endpoints).
 > "Review how my ORM or query builder is used and find places where its
 > raw-query, raw-fragment, or dynamic-condition features are fed user
 > input unsafely. Replace unsafe raw fragments with parameterized
@@ -141,7 +143,7 @@ second pass once the basics are covered.
 > cannot be manipulated into unintended queries. Summarize the unsafe ORM
 > usage you found and how you fixed it."
 
-**2. Trim over-exposed fields in responses**
+**2. Trim over-exposed fields in responses** — 🔧 Fixed 2026-08-16, same fix as B2 #17: `onboarding.getJobStatus` was returning the full `RegimeGenerationJob` row (including raw internal `error` text) instead of an explicit shape; now selects only `id`/`status`/`resultRegimeId`/`createdAt`/`completedAt`. Re-confirmed `admin.flaggedUsers`/`admin.metrics` (fixed under B1 #17) still use explicit `select`s, and that `AdjustmentEvent.rationale` (which can carry internal system-level text, per its schema comment) is never returned by any `packages/api` procedure to any client, admin included.
 > "Audit my API responses for excessive data exposure, where endpoints
 > return more fields than the client needs. For each endpoint, define an
 > explicit output shape that includes only the fields required, and strip
@@ -150,7 +152,7 @@ second pass once the basics are covered.
 > account, and nested related objects, and report which endpoints were
 > over-sharing and what you removed."
 
-**3. Prevent server-side request forgery (SSRF)**
+**3. Prevent server-side request forgery (SSRF)** — N/A, confirmed 2026-08-16. No feature anywhere fetches a URL derived from user input (no webhooks-out, link previews, importers, or image fetchers) — the only inbound webhook (`/api/webhooks/clerk`) receives, never originates, requests.
 > "Audit any feature where my server fetches a URL or makes a request
 > based on user input — webhooks, link previews, importers, or image
 > fetchers — for server-side request forgery. Validate and restrict the
@@ -160,7 +162,7 @@ second pass once the basics are covered.
 > checks survive DNS and redirect tricks, and report each fetch you
 > secured."
 
-**4. Prevent stored XSS in content**
+**4. Prevent stored XSS in content** — ✅ Confirmed clean 2026-08-16 (re-check of B1 #15 with a stored-content-specific lens). Only `dangerouslySetInnerHTML` in the codebase is a static, hardcoded anti-flash script in `apps/web/src/app/layout.tsx` — not user content. Every path that stores and later re-displays free text (`symptomsText`, `lifestyleContextText`, `targetMovement` at onboarding; `manualHoldReason` in the admin panel) is rendered through plain React text interpolation (auto-escaped), never as raw HTML.
 > "Audit the paths where user-submitted content is saved and later
 > displayed to other users for stored cross-site scripting. Ensure
 > content is validated and sanitized appropriately when stored and
@@ -169,7 +171,7 @@ second pass once the basics are covered.
 > too — usernames, file names, notification text, and admin views — and
 > report each stored-content flow you secured."
 
-**5. Configure CORS without dangerous wildcards**
+**5. Configure CORS without dangerous wildcards** — ✅ Re-confirmed 2026-08-16, largely overlaps with the CORS fix already done in B1 #18: `apps/web/src/app/api/trpc/[trpc]/route.ts` allowlists origins via `ALLOWED_ORIGINS`, reflects the incoming `Origin` only when it matches the allowlist (never a bare wildcard), and never combines a wildcard with credentials.
 > "Review my Cross-Origin Resource Sharing configuration for unsafe
 > settings. Replace any wildcard origin — especially when combined with
 > credentials — with an explicit allowlist of trusted origins, allow only
@@ -177,9 +179,6 @@ second pass once the basics are covered.
 > Origin header back without validating it against the allowlist. Confirm
 > that credentials are only permitted for trusted origins, and explain the
 > final CORS policy you set."
-
-*(Note: #5 largely overlaps with the CORS fix already done in B1 #18 —
-worth a quick re-check rather than a full pass.)*
 
 ---
 
@@ -315,9 +314,9 @@ For a pre-launch app, a reasonable order is:
    and high-value to fix early. Mostly done — item 5's Clerk webhook
    registration is the one manual step left.
 2. **Category B (Security)** — do this fully before any real users touch
-   the app. This is the highest-stakes category. B1 is largely done; work
-   through B2 next (especially #16, webhook signature verification, given
-   the new Clerk webhook), then B3.
+   the app. This is the highest-stakes category. B1/B2/B3 are all now
+   audited (2026-08-15/16) — remaining work is a handful of manual Clerk
+   Dashboard settings (see B2/B3) and deliberately-deferred rate limiting.
 3. **Category D (Performance)** — worth doing once core features are
    stable, before you have real traffic to break.
 4. **Category C (UX Polish)** — do this last; it's the most "nice to

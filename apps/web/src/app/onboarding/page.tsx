@@ -182,7 +182,6 @@ export default function OnboardingPage() {
         ) : status === "FAILED" ? (
           <>
             <p>We couldn&apos;t generate a regime right now. This has been flagged for review.</p>
-            {jobStatus.data?.error && <p>Details: {jobStatus.data.error}</p>}
           </>
         ) : (
           <p>Drafting your two-session regime — this takes a few seconds…</p>

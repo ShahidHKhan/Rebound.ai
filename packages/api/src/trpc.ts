@@ -6,6 +6,18 @@ import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
+  // tRPC forwards error.message to the client for every error, including
+  // uncaught ones (Prisma/Anthropic SDK exceptions land here with their raw
+  // internal text) — unlike `stack`, that isn't dev-gated by default. Mask
+  // it in production for anything we didn't deliberately throw as a
+  // TRPCError with its own safe message; log the real cause server-side.
+  errorFormatter({ shape, error }) {
+    if (error.code === "INTERNAL_SERVER_ERROR" && process.env.NODE_ENV === "production") {
+      console.error("Unhandled tRPC error:", error.cause ?? error);
+      return { ...shape, message: "Something went wrong. Please try again." };
+    }
+    return shape;
+  },
 });
 
 export const router = t.router;

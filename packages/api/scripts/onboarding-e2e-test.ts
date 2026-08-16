@@ -47,7 +47,7 @@ async function main() {
 
   let job = await caller.onboarding.getJobStatus({ jobId: submitResult.jobId });
   while (job.status === "PENDING") {
-    console.log("polling... status:", job.status, "retryCount:", job.retryCount);
+    console.log("polling... status:", job.status);
     await sleep(1500);
     job = await caller.onboarding.getJobStatus({ jobId: submitResult.jobId });
   }

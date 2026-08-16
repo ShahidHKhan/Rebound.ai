@@ -71,12 +71,24 @@ export const onboardingRouter = router({
   }),
 
   getJobStatus: protectedProcedure.input(z.object({ jobId: z.string() })).query(async ({ ctx, input }) => {
-    const job = await ctx.prisma.regimeGenerationJob.findUniqueOrThrow({ where: { id: input.jobId } });
+    const job = await ctx.prisma.regimeGenerationJob.findUniqueOrThrow({
+      where: { id: input.jobId },
+      select: { id: true, userId: true, status: true, resultRegimeId: true, createdAt: true, completedAt: true },
+    });
 
     if (job.userId !== ctx.userId) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
 
-    return job;
+    // Deliberately excludes `error`/`retryCount`/`fallbackPresetId` — `error`
+    // carries raw internal exception text (Prisma/Anthropic SDK messages),
+    // never safe to forward to the client that triggered the failure.
+    return {
+      id: job.id,
+      status: job.status,
+      resultRegimeId: job.resultRegimeId,
+      createdAt: job.createdAt,
+      completedAt: job.completedAt,
+    };
   }),
 });
