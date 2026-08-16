@@ -4,7 +4,16 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "ANTHROPIC_API_KEY",
+        "CLERK_SECRET_KEY",
+        "CRON_SECRET",
+        "DATABASE_URL",
+        "DATABASE_URL_RLS",
+        "ALLOWED_ORIGINS",
+        "CLERK_WEBHOOK_SECRET"
+      ]
     },
     "dev": {
       "cache": false,
