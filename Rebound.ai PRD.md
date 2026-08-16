@@ -294,7 +294,7 @@ This is a starting schema, not final — "regime," "session," and "exercise" nee
 - **Direct access:** start without employer coverage, insurance auth, or diagnosis.
 - **DTC cost:** pricing stays low because there's no clinician-hour overhead (trial through first regime cycle → subscription).
 - **Speed:** no scheduling and no hardware — questionnaire → regime immediately; more consumer-app habit loop.
-- **Broader scope:** not just diagnosed MSK; also general mobility/fitness/casual stretching.
+- **Broader scope:** not just diagnosed MSK injuries; also in-season training load, mobility work, and recovery between hard sessions — a training tool, not just a rehab tool.
 - **Habit-loop structure:** a fixed, forgiving two-session daily rhythm (wake + sunset) with content-aware exercise placement and a streak that only needs one of the two sessions — see Daily Session Structure. This is a deliberate product bet, not incidental: it's the mechanism meant to solve the adherence problem named in Problem Statement, not just a gamification layer bolted on top.
 
 **Trust mechanisms forgone at v1 (deliberate):**
