@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
 
@@ -96,10 +97,14 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
     return (
       <main style={pageStyle}>
         <h1>Regime activated</h1>
-        <p>
-          {activated.exerciseCount} exercises are now live, split across your morning and evening sessions.
+        <p className="banner banner-success">
+          ✓ {activated.exerciseCount} exercises are now live, split across your morning and evening sessions.
         </p>
-        <p>(Daily check-in screen is next up — Task 4.)</p>
+        <p>
+          <Link href="/" style={{ color: "#2563eb", textDecoration: "underline" }}>
+            Go to today&apos;s sessions →
+          </Link>
+        </p>
       </main>
     );
   }
@@ -107,7 +112,9 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
   if (regimeQuery.isLoading || !exercises) {
     return (
       <main style={pageStyle}>
-        <p>Loading regime…</p>
+        <p>
+          <span className="spinner" aria-hidden="true" /> Loading regime…
+        </p>
       </main>
     );
   }
@@ -115,7 +122,9 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
   if (regimeQuery.isError) {
     return (
       <main style={pageStyle}>
-        <p role="alert">Couldn&apos;t load this regime: {regimeQuery.error.message}</p>
+        <p role="alert" className="banner banner-error">
+          Couldn&apos;t load this regime: {regimeQuery.error.message}
+        </p>
       </main>
     );
   }
@@ -212,10 +221,20 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
       ))}
 
       <button type="button" onClick={handleActivate} disabled={activate.isPending}>
-        {activate.isPending ? "Activating…" : "Activate regime"}
+        {activate.isPending ? (
+          <>
+            <span className="spinner" aria-hidden="true" /> Activating…
+          </>
+        ) : (
+          "Activate regime"
+        )}
       </button>
 
-      {activate.isError && <p role="alert">{activate.error.message}</p>}
+      {activate.isError && (
+        <p role="alert" className="banner banner-error">
+          {activate.error.message}
+        </p>
+      )}
     </main>
   );
 }

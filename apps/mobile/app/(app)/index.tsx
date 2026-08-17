@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import { AppState, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, ScrollView, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/Button";
 import { trpc } from "../../lib/trpc";
@@ -13,28 +13,35 @@ type SessionSlot = "MORNING" | "EVENING";
 function DeleteAccountSection() {
   const { signOut } = useAuth();
   const shared = useSharedStyles();
-  const [confirming, setConfirming] = useState(false);
 
   const deleteAccount = trpc.user.deleteMyAccount.useMutation({
     onSuccess: () => signOut(),
   });
 
-  if (!confirming) {
-    return <Button label="Delete my account" variant="secondary" onPress={() => setConfirming(true)} />;
+  function confirmDelete() {
+    Alert.alert(
+      "Delete your account?",
+      "This permanently deletes your account, regimes, and session history. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => deleteAccount.mutate() },
+      ]
+    );
   }
 
   return (
-    <View style={shared.card}>
-      <Text style={shared.error}>
-        This permanently deletes your account, regimes, and session history. This can&apos;t be undone.
-      </Text>
+    <View style={{ gap: 8 }}>
       <Button
-        label={deleteAccount.isPending ? "Deleting…" : "Yes, permanently delete my account"}
-        disabled={deleteAccount.isPending}
-        onPress={() => deleteAccount.mutate()}
+        label={deleteAccount.isPending ? "Deleting…" : "Delete my account"}
+        variant="secondary"
+        loading={deleteAccount.isPending}
+        onPress={confirmDelete}
       />
-      <Button label="Cancel" variant="secondary" onPress={() => setConfirming(false)} />
-      {deleteAccount.isError && <Text style={shared.error}>{deleteAccount.error.message}</Text>}
+      {deleteAccount.isError && (
+        <View style={shared.errorBanner}>
+          <Text style={shared.error}>{deleteAccount.error.message}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -75,7 +82,8 @@ function SessionCard({
         <Button
           label="Mark session complete"
           variant="secondary"
-          disabled={completing || !session}
+          disabled={!session}
+          loading={completing}
           onPress={() => session && onComplete(session.id)}
         />
       )}
@@ -120,6 +128,7 @@ export default function HomeScreen() {
   if (today.isLoading) {
     return (
       <View style={shared.centeredPage}>
+        <ActivityIndicator />
         <Text>Loading…</Text>
       </View>
     );
@@ -128,7 +137,9 @@ export default function HomeScreen() {
   if (today.isError) {
     return (
       <View style={shared.centeredPage}>
-        <Text style={shared.error}>Couldn&apos;t load today&apos;s sessions: {today.error.message}</Text>
+        <View style={shared.errorBanner}>
+          <Text style={shared.error}>Couldn&apos;t load today&apos;s sessions: {today.error.message}</Text>
+        </View>
       </View>
     );
   }
@@ -177,15 +188,25 @@ export default function HomeScreen() {
         <Text style={shared.subtitle}>Daily check-in</Text>
         {data.todaysLog || logResult ? (
           <>
-            <Text>You&apos;ve already logged today.</Text>
-            {logResult?.action === "rollback" && (
-              <Text style={shared.alert}>
-                Stop &amp; consult a professional. Your regime has been rolled back based on today&apos;s log.{" "}
-                {logResult.reasons.join(" ")}
-              </Text>
-            )}
-            {(logResult?.action === "hold" || logResult?.action === "flag_for_review") && (
-              <Text>We&apos;re keeping a closer eye on your recent trend. {logResult.reasons.join(" ")}</Text>
+            {logResult?.action === "rollback" ? (
+              <View style={shared.errorBanner}>
+                <Text style={shared.alert}>
+                  Stop &amp; consult a professional. Your regime has been rolled back based on today&apos;s log.{" "}
+                  {logResult.reasons.join(" ")}
+                </Text>
+              </View>
+            ) : logResult?.action === "hold" || logResult?.action === "flag_for_review" ? (
+              <View style={shared.errorBanner}>
+                <Text style={shared.error}>
+                  We&apos;re keeping a closer eye on your recent trend. {logResult.reasons.join(" ")}
+                </Text>
+              </View>
+            ) : logResult ? (
+              <View style={shared.successBanner}>
+                <Text style={shared.success}>✓ Logged for today.</Text>
+              </View>
+            ) : (
+              <Text>You&apos;ve already logged today.</Text>
             )}
           </>
         ) : (
@@ -208,8 +229,8 @@ export default function HomeScreen() {
             />
 
             <Button
-              label={logSession.isPending ? "Logging…" : "Log today"}
-              disabled={logSession.isPending}
+              label="Log today"
+              loading={logSession.isPending}
               onPress={() =>
                 logSession.mutate({
                   painScore: Number(painScore),
@@ -218,7 +239,11 @@ export default function HomeScreen() {
                 })
               }
             />
-            {logSession.isError && <Text style={shared.error}>{logSession.error.message}</Text>}
+            {logSession.isError && (
+              <View style={shared.errorBanner}>
+                <Text style={shared.error}>{logSession.error.message}</Text>
+              </View>
+            )}
           </>
         )}
       </View>

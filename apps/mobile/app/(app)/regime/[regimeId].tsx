@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
 import type { inferRouterOutputs } from "@trpc/server";
 
 import type { AppRouter } from "@rebound/api";
@@ -89,7 +89,11 @@ export default function RegimeReviewScreen() {
     return (
       <View style={shared.centeredPage}>
         <Text style={shared.title}>Regime activated</Text>
-        <Text>{activated.exerciseCount} exercises are now live, split across morning and evening sessions.</Text>
+        <View style={shared.successBanner}>
+          <Text style={shared.success}>
+            ✓ {activated.exerciseCount} exercises are now live, split across morning and evening sessions.
+          </Text>
+        </View>
         <Button label="Go to today's sessions →" onPress={() => router.replace("/")} />
       </View>
     );
@@ -98,6 +102,7 @@ export default function RegimeReviewScreen() {
   if (regimeQuery.isLoading || !exercises) {
     return (
       <View style={shared.centeredPage}>
+        <ActivityIndicator />
         <Text>Loading regime…</Text>
       </View>
     );
@@ -106,7 +111,9 @@ export default function RegimeReviewScreen() {
   if (regimeQuery.isError) {
     return (
       <View style={shared.centeredPage}>
-        <Text style={shared.error}>Couldn&apos;t load this regime: {regimeQuery.error.message}</Text>
+        <View style={shared.errorBanner}>
+          <Text style={shared.error}>Couldn&apos;t load this regime: {regimeQuery.error.message}</Text>
+        </View>
         <Button label="← Back" variant="secondary" onPress={() => router.back()} />
       </View>
     );
@@ -170,8 +177,12 @@ export default function RegimeReviewScreen() {
         </View>
       ))}
 
-      <Button label={activate.isPending ? "Activating…" : "Activate regime"} onPress={handleActivate} disabled={activate.isPending} />
-      {activate.isError && <Text style={shared.error}>{activate.error.message}</Text>}
+      <Button label="Activate regime" onPress={handleActivate} loading={activate.isPending} />
+      {activate.isError && (
+        <View style={shared.errorBanner}>
+          <Text style={shared.error}>{activate.error.message}</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }

@@ -27,7 +27,7 @@ amounts.
 | 2 | Privacy Policy doesn't disclose "we collect user data" | Must explicitly state what data is collected | Moderate | ✅ Done 2026-08-15 — covered in the new Privacy Policy |
 | 3 | No mention of AI usage in the Privacy Policy | If you use AI (e.g. LLMs) to process user data, this must be disclosed | Moderate | ✅ Done 2026-08-15 — Anthropic/Claude usage disclosed |
 | 4 | No mention of third-party data processors/collectors in the Privacy Policy | Any analytics, payment, or AI vendors touching user data need to be named | Moderate | ✅ Done 2026-08-15 — Clerk, Supabase, Anthropic, Vercel all named |
-| 5 | Not deleting user uploads when requested/on account deletion | Data retention/right-to-delete violations | Low-moderate | ✅ Done 2026-08-15 — `user.deleteMyAccount` mutation + `/api/webhooks/clerk` safety net; "Delete my account" in both apps' home screens. Manual step remaining: register the webhook in Clerk Dashboard (see `HANDOFF.md`) |
+| 5 | Not deleting user uploads when requested/on account deletion | Data retention/right-to-delete violations | Low-moderate | ✅ Done 2026-08-15, webhook registered 2026-08-17 — `user.deleteMyAccount` mutation + `/api/webhooks/clerk` safety net; "Delete my account" in both apps' home screens. Webhook registered in Clerk Dashboard (Development instance) against the live Vercel URL, subscribed to `user.deleted`; `CLERK_WEBHOOK_SECRET` pushed to Vercel Production and redeployed |
 | 6 | Storage bucket set to public | Massive data exposure risk — one of the most common real-world breaches | Low-moderate (but high breach severity) | N/A — no storage bucket/file-upload feature exists yet; revisit if one is added |
 | 7 | Fake testimonials / reviews | FTC violation (deceptive advertising) — high-dollar exposure | High | N/A — no marketing/landing page exists yet |
 | 8 | Cancellation flow longer/harder than sign-up flow | Violates "click to cancel" style consumer protection rules | High | N/A — no billing/subscription flow exists yet (Stripe is only planned, per PRD) |
@@ -66,12 +66,12 @@ Source: "20 things to have Claude do before launching your app."
 8. Block field tampering (server validates/ignores client-supplied fields it shouldn't trust, e.g. `role`, `isAdmin`, `price`) — ✅ confirmed no router accepts these as input
 
 **Session & Account Security**
-9. Secure session cookies (httpOnly, secure, sameSite flags) — delegated to Clerk defaults; manual follow-up noted in `HANDOFF.md`
+9. Secure session cookies (httpOnly, secure, sameSite flags) — ✅ delegated to Clerk defaults, not a dashboard-configurable setting; `@clerk/nextjs`/`@clerk/clerk-expo` hardcode this, confirmed at the code level 2026-08-16 (see B2 #10 below)
 10. Hash passwords (bcrypt/argon2, never plaintext or reversible encryption) — N/A, Clerk manages all password storage
-11. Rate limit login attempts — delegated to Clerk (no custom auth surface exists); manual Clerk Dashboard follow-up noted in `HANDOFF.md`
+11. Rate limit login attempts — ✅ Confirmed 2026-08-17 — Clerk Dashboard > Protect > Rules > **Lockout policy**: Enabled (Development instance)
 
 **Abuse & Input Protection**
-12. Add bot protection (captcha/rate limiting on public forms and signup) — delegated to Clerk (only public form is Clerk's own sign-up); manual Clerk Dashboard follow-up noted in `HANDOFF.md`
+12. Add bot protection (captcha/rate limiting on public forms and signup) — ✅ Confirmed 2026-08-17 — Clerk Dashboard > Protect > Rules > **Bot sign-up protection**: Enabled (Cloudflare Turnstile, Development instance)
 13. Parameterize all database queries (prevent SQL injection) — ✅ reviewed 2026-08-15, already solid — Prisma throughout, only trusted infra scripts use raw SQL
 14. Validate all input (server-side, not just client-side) — ✅ reviewed 2026-08-15, already solid — zod schemas on every tRPC procedure
 15. Escape user-generated content before rendering (prevent XSS) — ✅ reviewed 2026-08-15, already solid — no `dangerouslySetInnerHTML` anywhere
@@ -83,7 +83,7 @@ Source: "20 things to have Claude do before launching your app."
 19. Force HTTPS everywhere — ✅ Done 2026-08-15 — explicit HSTS header added (Vercel already enforced HTTPS at the platform level)
 20. Scan dependencies for known vulnerabilities (npm audit / equivalent) — ✅ Done 2026-08-15 — `.github/dependabot.yml` added (weekly, npm ecosystem covers pnpm)
 
-**Remaining manual follow-ups (see `HANDOFF.md`):** register the Clerk account-deletion webhook, and confirm session cookie flags / login rate limiting / bot protection in the Clerk Dashboard.
+**Remaining manual follow-ups:** none — the webhook is registered and session cookie/rate limiting/bot protection are all confirmed as of 2026-08-17 (see items 5, 9, 11, 12 above). Still open: cutting the Development instance over to Production before real (non-invited) users touch the app — Dev/Prod settings are independent, so this pass should be re-confirmed on Production when that happens.
 
 **Suggested prompt for this sub-section:**
 "Go through item [#] from my Pre-Launch Security Checklist. Check my
@@ -182,12 +182,12 @@ second pass once the basics are covered.
 
 ---
 
-## Category C: UX / Frontend Polish Features — TODO
+## Category C: UX / Frontend Polish Features — partially done (targeted pass)
 
 Source: "20 things you can tell Claude to add to your website" (Pt. 3).
 These are smaller UX/frontend touches — good for polishing an app that's
-functionally done but feels unfinished. None of these have been started
-yet.
+functionally done but feels unfinished. Items 6/8/9/10 done 2026-08-17;
+the rest are still unstarted.
 
 **Navigation & Layout**
 1. Sticky headers
@@ -197,11 +197,11 @@ yet.
 5. Floating contact button
 
 **Feedback & State**
-6. Loading animations
+6. Loading animations — ✅ Done 2026-08-17 — hand-rolled spinner (web: `.spinner` CSS class in `globals.css`; mobile: `ActivityIndicator` via a new `loading` prop on `components/Button.tsx`), applied to onboarding submit, regime activate, session log, mark-session-complete, and initial page loads. No new dependency.
 7. Hover states on interactive elements
-8. Form success state
-9. Form error state
-10. Confirmation modals (for destructive actions like delete)
+8. Form success state — ✅ Done 2026-08-17 — distinct green success banner on a fresh session-log submission (vs. plain "already logged" text on a later revisit); the regime-activation success screen restyled as a banner and (on web) fixed a dead-end by adding a "Go to today's sessions →" link, matching mobile
+9. Form error state — ✅ Done 2026-08-17 — every existing error message restyled into a bordered/colored banner (web: `.banner-error`; mobile: `errorBanner` style token), consistent across onboarding, regime review, session log, and account deletion
+10. Confirmation modals (for destructive actions like delete) — ✅ Done 2026-08-17 — "Delete my account" converted from an inline confirm-then-swap-text pattern to a real modal: native HTML `<dialog>` on web, native `Alert.alert()` on mobile. No new dependency either app.
 11. Scroll progress bar
 
 **Content & Discovery**
@@ -216,6 +216,17 @@ yet.
 18. Print stylesheet
 19. Password visibility toggle (on password fields)
 20. UTM tracking on marketing links
+
+**Deliberately deferred: a real UI/UX design pass.** Both apps are still fully
+hand-rolled — inline style objects per page on web, a small shared style
+factory on mobile, no component library or design system. That's the right
+call for now (see `HANDOFF.md`'s "how this project is being built"), but it
+means visual design (color, type, spacing, layout) has never had a
+deliberate pass, only incremental fixes like items 6/8/9/10 above. **Once
+the core product loop is fully implemented (Flow A/B, escalation monitor,
+billing at minimum), do an actual full UI/UX overhaul** — from real Figma
+designs (see the PRD's still-open "Designs" section), not more hand-rolled
+polish on top of hand-rolled polish.
 
 **Suggested prompt to give Claude Code for this category:**
 "Add [item] to my site. Match my existing design system/styling and don't
@@ -311,16 +322,21 @@ one at a time, and test after each.
 For a pre-launch app, a reasonable order is:
 
 1. **Category A (Legal)** — items 1-4 (privacy policy basics) are cheap
-   and high-value to fix early. Mostly done — item 5's Clerk webhook
-   registration is the one manual step left.
+   and high-value to fix early. Fully done as of 2026-08-17, including
+   item 5's Clerk webhook registration.
 2. **Category B (Security)** — do this fully before any real users touch
-   the app. This is the highest-stakes category. B1/B2/B3 are all now
-   audited (2026-08-15/16) — remaining work is a handful of manual Clerk
-   Dashboard settings (see B2/B3) and deliberately-deferred rate limiting.
+   the app. This is the highest-stakes category. B1/B2/B3 are all fully
+   audited and closed out (2026-08-15/16/17), including every manual
+   Clerk Dashboard follow-up. Only deliberately-deferred rate limiting
+   remains, plus the separate Clerk Production-instance cutover decision.
 3. **Category D (Performance)** — worth doing once core features are
-   stable, before you have real traffic to break.
-4. **Category C (UX Polish)** — do this last; it's the most "nice to
-   have" and easiest to iterate on post-launch.
+   stable, before you have real traffic to break. Still fully unstarted.
+4. **Category C (UX Polish)** — a targeted pass (loading/success/error
+   states, confirmation modals) was done 2026-08-17 ahead of schedule for
+   a demo; the remaining 16 items are still "do last, iterate
+   post-launch." A full UI/UX design overhaul is separately deferred
+   until the core product loop is complete — see the note at the end of
+   Category C above.
 
 ---
 

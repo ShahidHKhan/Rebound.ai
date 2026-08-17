@@ -87,3 +87,79 @@ input[type="radio"] {
     color-scheme: dark;
   }
 }
+
+/* UX polish: shared loading spinner + success/error feedback banners, used
+   across onboarding, regime review, and the daily check-in — kept here
+   since no per-page shared style module exists yet (same lever the
+   large-text toggle above uses). */
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: spin 0.7s linear infinite;
+  vertical-align: -0.15em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.banner {
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  border: 1px solid;
+}
+
+.banner-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.banner-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+@media (prefers-color-scheme: dark) {
+  .banner-error {
+    background: #2a1512;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+  }
+  .banner-success {
+    background: #0f2417;
+    border-color: #14532d;
+    color: #86efac;
+  }
+}
+
+/* Native <dialog> confirmation modal (account deletion) — backdrop +
+   centering are the two things the element doesn't already do for free. */
+dialog.confirm-modal {
+  border: none;
+  border-radius: 10px;
+  padding: 1.5rem;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  color: var(--foreground);
+  background: var(--background);
+}
+
+dialog.confirm-modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}

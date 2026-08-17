@@ -1,6 +1,6 @@
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
 
 import { ChipGroup } from "../../components/ChipGroup";
 import { trpc } from "../../lib/trpc";
@@ -194,7 +194,10 @@ export default function OnboardingScreen() {
         ) : status === "FAILED" ? (
           <Text>We couldn&apos;t generate a regime right now. This has been flagged for review.</Text>
         ) : (
-          <Text>Drafting your two-session regime — this takes a few seconds…</Text>
+          <>
+            <ActivityIndicator />
+            <Text>Drafting your two-session regime — this takes a few seconds…</Text>
+          </>
         )}
       </View>
     );
@@ -271,8 +274,12 @@ export default function OnboardingScreen() {
         scrollable
       />
 
-      <Button label={submit.isPending ? "Submitting…" : "Continue"} onPress={handleSubmit} disabled={submit.isPending} />
-      {submit.isError && <Text style={shared.error}>{submit.error.message}</Text>}
+      <Button label="Continue" onPress={handleSubmit} loading={submit.isPending} />
+      {submit.isError && (
+        <View style={shared.errorBanner}>
+          <Text style={shared.error}>{submit.error.message}</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }

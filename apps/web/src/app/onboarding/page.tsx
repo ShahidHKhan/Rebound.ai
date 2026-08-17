@@ -184,7 +184,10 @@ export default function OnboardingPage() {
             <p>We couldn&apos;t generate a regime right now. This has been flagged for review.</p>
           </>
         ) : (
-          <p>Drafting your two-session regime — this takes a few seconds…</p>
+          <p>
+            <span className="spinner" aria-hidden="true" /> Drafting your two-session regime — this takes a few
+            seconds…
+          </p>
         )}
       </main>
     );
@@ -284,10 +287,20 @@ export default function OnboardingPage() {
         </label>
 
         <button type="submit" disabled={submit.isPending}>
-          {submit.isPending ? "Submitting…" : "Continue"}
+          {submit.isPending ? (
+            <>
+              <span className="spinner" aria-hidden="true" /> Submitting…
+            </>
+          ) : (
+            "Continue"
+          )}
         </button>
 
-        {submit.isError && <p role="alert">{submit.error.message}</p>}
+        {submit.isError && (
+          <p role="alert" className="banner banner-error">
+            {submit.error.message}
+          </p>
+        )}
       </form>
     </main>
   );
