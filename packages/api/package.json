@@ -14,19 +14,19 @@
     "scenario-e2e-test": "dotenv -e .env -- tsx scripts/scenario-e2e-test.ts"
   },
   "dependencies": {
-    "@clerk/backend": "^3.16.5",
+    "@clerk/backend": "^3.16.6",
     "@rebound/agents": "workspace:*",
     "@rebound/clinical-rules": "workspace:*",
     "@rebound/db": "workspace:*",
     "@trpc/server": "^11.0.0",
-    "next": "16.3.0",
+    "next": "16.3.1",
     "superjson": "^2.2.1",
-    "zod": "^3.24.1"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.2.0",
     "dotenv-cli": "^11.0.0",
     "tsx": "^4.23.12",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   }
 }
