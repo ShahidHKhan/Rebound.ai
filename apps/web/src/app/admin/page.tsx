@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
 
@@ -99,6 +100,11 @@ export default function AdminPage() {
   return (
     <main style={pageStyle}>
       <h1>Admin</h1>
+
+      <nav style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        <Link href="/admin/experiments">Flow experimentation →</Link>
+        <Link href="/admin/experiments/scenarios">Scenarios →</Link>
+      </nav>
 
       <section style={sectionStyle}>
         <h2>Metrics</h2>

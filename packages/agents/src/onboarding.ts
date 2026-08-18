@@ -96,13 +96,16 @@ export async function draftAndPersistRegime(
 ): Promise<{ regimeId: string; exerciseCount: number }> {
   const riskTier = determineRiskTier(submission.answers);
 
-  const draft = await generateInitialRegime({
-    goalType: submission.answers.goalType,
-    targetMovement: submission.targetMovement,
-    riskTier,
-    symptomsText: submission.symptomsText,
-    lifestyleContextText: submission.lifestyleContextText,
-  });
+  const draft = await generateInitialRegime(
+    {
+      goalType: submission.answers.goalType,
+      targetMovement: submission.targetMovement,
+      riskTier,
+      symptomsText: submission.symptomsText,
+      lifestyleContextText: submission.lifestyleContextText,
+    },
+    { userId }
+  );
 
   const structural = validateStructure(draft);
   if (!structural.success) {

@@ -71,6 +71,38 @@ enum JobStatus {
   FAILED
 }
 
+// ── Admin experimentation dashboard ─────────────────────────────────────
+
+enum LlmFlow {
+  FLOW_A_DRAFT
+  FLOW_B_ADJUST
+  FREE_TEXT_CLASSIFIER
+}
+
+enum LlmCallSource {
+  PRODUCTION
+  ADMIN_TEST
+}
+
+enum TestFixtureType {
+  ONBOARDING
+  ADJUSTMENT
+}
+
+enum TestRunStatus {
+  RUNNING
+  VALID
+  INVALID
+  ERROR
+}
+
+enum SyntheticPainPattern {
+  IMPROVING
+  PLATEAUING
+  WORSENING
+  CONTRADICTORY
+}
+
 // ── User ─────────────────────────────────────────────────────────────────
 
 model User {
@@ -321,4 +353,113 @@ model RegimeGenerationJob {
   error String?
 
   @@map("regime_generation_jobs")
+}
+
+// ── Admin experimentation dashboard ─────────────────────────────────────
+// Not user-owned data (same category as Exercise/Preset) — deliberately no
+// RLS policy for any of these three, see packages/db/sql/rls-policies.sql.
+
+// One row per actual Anthropic API call — each tool-use round-trip within a
+// single flow invocation is its own row. Real traffic and admin test runs
+// both write here, distinguished by `source`. Written by the privileged
+// connection only (packages/agents), never by prismaRls.
+model LlmCall {
+  id            String        @id @default(cuid())
+  createdAt     DateTime      @default(now())
+  flow          LlmFlow
+  source        LlmCallSource
+  model         String
+  // Correlates every call belonging to one flow invocation (one onboarding
+  // draft, one Flow B adjustment, one admin test run) so a trace view can
+  // group and order them — not a hard FK, just a shared generated id.
+  groupId       String
+  sequenceIndex Int
+
+  userId    String? // set for PRODUCTION calls, null for ADMIN_TEST
+  testRunId String?
+  testRun   TestRun? @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+
+  inputTokens  Int
+  outputTokens Int
+  latencyMs    Int
+  costUsd      Decimal? @db.Decimal(10, 6)
+  stopReason   String?
+  success      Boolean
+  errorMessage String?
+
+  // Full request (messages/tools sent) and response (content blocks
+  // returned) for trace inspection.
+  requestJson  Json
+  responseJson Json?
+
+  @@index([groupId])
+  @@index([flow, source, createdAt])
+  @@map("llm_calls")
+}
+
+// A saved synthetic input for dry-running a flow — never references a real
+// User row. ONBOARDING payloads match onboardingSubmissionSchema exactly;
+// ADJUSTMENT payloads match adjustmentFixtureSchema (packages/api/src/schemas.ts).
+model TestFixture {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  type        TestFixtureType
+  payload     Json
+  createdAt   DateTime        @default(now())
+
+  testRuns TestRun[]
+
+  @@map("test_fixtures")
+}
+
+// One admin-triggered dry run of a flow against a fixture + chosen model, OR
+// one cycle within a Scenario chain (see below). Never writes to
+// User/Regime/AdjustmentEvent — that's the isolation guarantee that keeps
+// this feature from touching real production data.
+model TestRun {
+  id        String        @id @default(cuid())
+  // Null for a scenario cycle beyond cycle 0 — its input is generated on the
+  // fly, not read from a saved TestFixture.
+  fixtureId String?
+  fixture   TestFixture?  @relation(fields: [fixtureId], references: [id])
+  flow      LlmFlow
+  model     String
+  status    TestRunStatus @default(RUNNING)
+  // Drafted/proposed regime + validation issues + (for Flow B) decision/rationale.
+  // Null while status is RUNNING; set when the run finishes (or errors).
+  resultJson      Json?
+  createdByUserId String
+  createdAt       DateTime @default(now())
+
+  // Set only for a Scenario cycle (see Scenario below): scenarioId + cycleIndex
+  // (0 = Flow A, 1..N = successive Flow B cycles) link this run into a chain.
+  // inputJson carries exactly what was fed into this cycle — the onboarding
+  // payload at cycle 0, or {painPattern, days, trailingSessionLogs} at cycle
+  // 1+ — so history can be reconstructed without re-deriving anything.
+  scenarioId String?
+  scenario   Scenario? @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  cycleIndex Int?
+  inputJson  Json?
+
+  llmCalls LlmCall[]
+
+  @@index([scenarioId, cycleIndex])
+  @@map("test_runs")
+}
+
+// A synthetic Flow A -> Flow B -> Flow B... chain, for watching a regime
+// evolve over several simulated adjustment cycles without needing weeks of
+// real usage to accumulate first. Not user-owned data — same no-RLS
+// treatment as LlmCall/TestFixture/TestRun above.
+model Scenario {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  createdAt       DateTime @default(now())
+  createdByUserId String
+
+  testRuns TestRun[]
+
+  @@map("scenarios")
 }

@@ -1,5 +1,5 @@
 import { initTRPC, TRPCError } from "@trpc/server";
-import { prismaRls } from "@rebound/db";
+import { prisma, prismaRls } from "@rebound/db";
 import superjson from "superjson";
 
 import type { Context } from "./context";
@@ -58,4 +58,36 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   await ctx.prisma.$executeRaw`SELECT set_config('app.is_admin', 'true', true)`;
 
   return next({ ctx });
+});
+
+// Admin-gated but deliberately NOT wrapped in an RLS transaction, unlike
+// adminProcedure above. Use this only for procedures that exclusively touch
+// non-user-owned tables (LlmCall/TestFixture/TestRun — same category as
+// Exercise/Preset, see packages/db/prisma/schema.prisma's "Admin
+// experimentation dashboard" section: deliberately no RLS policy on any of
+// them). adminProcedure holds open an interactive Prisma transaction for the
+// entire procedure body, which is fine for fast DB-only work but breaks the
+// moment a procedure does something genuinely slow inside it — a real
+// admin-triggered Flow A/B LLM call routinely exceeds Prisma's 5s default
+// interactive-transaction timeout, which surfaced as a real
+// "Transaction already closed" error hit while building the experiments
+// router. ctx.prisma here is the privileged global client (same one
+// packages/agents and the cron routes already use for system-level work),
+// not RLS-scoped — safe specifically because this procedure type is never
+// meant to touch a user-owned table.
+export const adminOnlyProcedure = t.procedure.use(async ({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: ctx.userId },
+    select: { role: true },
+  });
+
+  if (user?.role !== "ADMIN") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+
+  return next({ ctx: { ...ctx, userId: ctx.userId, prisma } });
 });

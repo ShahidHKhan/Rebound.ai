@@ -12,7 +12,9 @@
     "flow-a-persist-test": "dotenv -e .env -- tsx scripts/flow-a-persist-test.ts",
     "classifier-test": "dotenv -e .env -- tsx scripts/classifier-test.ts",
     "onboarding-test": "dotenv -e .env -- tsx scripts/onboarding-test.ts",
-    "flow-b-test": "dotenv -e .env -- tsx scripts/flow-b-test.ts"
+    "flow-b-test": "dotenv -e .env -- tsx scripts/flow-b-test.ts",
+    "admin-test-run-test": "dotenv -e .env -- tsx scripts/admin-test-run-test.ts",
+    "scenario-test": "dotenv -e .env -- tsx scripts/scenario-test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

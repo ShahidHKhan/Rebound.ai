@@ -11,8 +11,8 @@
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "seed": "tsx scripts/seed-exercises.ts",
-    "seed:presets": "tsx scripts/seed-presets.ts"
-
+    "seed:presets": "tsx scripts/seed-presets.ts",
+    "seed:test-fixtures": "tsx scripts/seed-test-fixtures.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1"

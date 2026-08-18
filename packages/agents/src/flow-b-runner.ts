@@ -21,9 +21,10 @@ async function attemptAdjustment(
   context: AdjustmentContext,
   riskTier: RiskTier,
   currentDraft: DraftRegime,
+  userId: string,
   revisionFeedback?: string
 ): Promise<Attempt> {
-  const proposal = await proposeAdjustment(context, revisionFeedback);
+  const proposal = await proposeAdjustment(context, revisionFeedback, { userId });
 
   const structural = validateStructure(proposal.regime);
   if (!structural.success) {
@@ -79,9 +80,9 @@ export async function runFlowBForUser(userId: string): Promise<FlowBResult> {
     })),
   };
 
-  let attempt = await attemptAdjustment(context, user.riskTier, currentDraft);
+  let attempt = await attemptAdjustment(context, user.riskTier, currentDraft, userId);
   if (!attempt.valid) {
-    attempt = await attemptAdjustment(context, user.riskTier, currentDraft, attempt.feedback);
+    attempt = await attemptAdjustment(context, user.riskTier, currentDraft, userId, attempt.feedback);
   }
 
   if (!attempt.valid) {

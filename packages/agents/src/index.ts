@@ -1,6 +1,14 @@
 export { anthropic, REGIME_MODEL } from "./client";
 export { generateInitialRegime } from "./flow-a";
-export type { RegimeGenerationContext } from "./flow-a";
+export type { RegimeGenerationContext, FlowCallOptions } from "./flow-a";
+export { AVAILABLE_MODELS, estimateCostUsd } from "./models";
+export type { AvailableModelId } from "./models";
+export { runFlowATestRun, runFlowBTestRun, runScenarioFlowBCycle } from "./admin-test-runs";
+export type { TestRunResult } from "./admin-test-runs";
+export { diffRegimes } from "./regime-diff";
+export type { RegimeDiffEntry } from "./regime-diff";
+export { generateSyntheticSessionLogs } from "./synthetic-session-logs";
+export type { SyntheticSessionLog } from "./synthetic-session-logs";
 export { classifyFreeTextRedFlags } from "./free-text-red-flag-classifier";
 export type { FreeTextClassification } from "./free-text-red-flag-classifier";
 export { runOnboarding } from "./onboarding";

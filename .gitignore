@@ -44,3 +44,6 @@ Thumbs.db
 
 .vercel
 .env*
+
+# claude code local skills/plugins
+.claude/

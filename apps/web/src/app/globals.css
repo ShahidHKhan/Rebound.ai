@@ -10,6 +10,37 @@
   }
 }
 
+/* dataviz skill's reference palette, scoped to chart components — only the
+   roles actually used (single-series identity blue, status good/critical,
+   chart chrome). Site has no manual dark-mode toggle, so only the
+   prefers-color-scheme block is needed (no [data-theme] variant). */
+.viz-root {
+  color-scheme: light;
+  --viz-surface: #fcfcfb;
+  --viz-text-primary: #0b0b0b;
+  --viz-text-secondary: #52514e;
+  --viz-text-muted: #898781;
+  --viz-gridline: #e1e0d9;
+  --viz-baseline: #c3c2b7;
+  --viz-series-1: #2a78d6;
+  --viz-status-good: #0ca30c;
+  --viz-status-critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  .viz-root {
+    color-scheme: dark;
+    --viz-surface: #1a1a19;
+    --viz-text-primary: #ffffff;
+    --viz-text-secondary: #c3c2b7;
+    --viz-text-muted: #898781;
+    --viz-gridline: #2c2c2a;
+    --viz-baseline: #383835;
+    --viz-series-1: #3987e5;
+    --viz-status-good: #0ca30c;
+    --viz-status-critical: #d03b3b;
+  }
+}
+
 html {
   height: 100%;
   /* Base for every rem/em value on the site — bumping this on the
