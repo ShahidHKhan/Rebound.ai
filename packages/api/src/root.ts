@@ -2,6 +2,7 @@ import { adminRouter } from "./routers/admin";
 import { adminExperimentsRouter } from "./routers/admin-experiments";
 import { healthRouter } from "./routers/health";
 import { onboardingRouter } from "./routers/onboarding";
+import { progressRouter } from "./routers/progress";
 import { regimeRouter } from "./routers/regime";
 import { sessionLogRouter } from "./routers/session-log";
 import { userRouter } from "./routers/user";
@@ -11,6 +12,7 @@ import { router } from "./trpc";
 export const appRouter = router({
   health: healthRouter,
   onboarding: onboardingRouter,
+  progress: progressRouter,
   regime: regimeRouter,
   sessionLog: sessionLogRouter,
   workoutSession: workoutSessionRouter,
