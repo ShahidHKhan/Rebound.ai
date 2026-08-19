@@ -135,6 +135,15 @@ input[type="radio"] {
   vertical-align: -0.15em;
 }
 
+/* Larger variant for standalone wait moments (e.g. the "building your plan"
+   screen) — same animation, just bigger so it reads as the focal element
+   rather than an inline glyph next to text. */
+.spinner-lg {
+  width: 1.75em;
+  height: 1.75em;
+  border-width: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .spinner {
     animation: none;
