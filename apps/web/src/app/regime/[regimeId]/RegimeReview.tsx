@@ -101,7 +101,7 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
           ✓ {activated.exerciseCount} exercises are now live, split across your morning and evening sessions.
         </p>
         <p>
-          <Link href="/" style={{ color: "#2563eb", textDecoration: "underline" }}>
+          <Link href="/today" style={{ color: "#2563eb", textDecoration: "underline" }}>
             Go to today&apos;s sessions →
           </Link>
         </p>
