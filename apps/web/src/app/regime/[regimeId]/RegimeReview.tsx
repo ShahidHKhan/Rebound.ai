@@ -146,7 +146,10 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
           {group.length === 0 && <p>No exercises assigned.</p>}
           {group.map((exercise) => (
             <div key={exercise.exerciseId} style={cardStyle}>
-              <strong>{exercise.name}</strong> <span>({exercise.category.toLowerCase()})</span>
+              <Link href={`/exercise/${exercise.exerciseId}`} style={{ fontWeight: 700 }}>
+                {exercise.name}
+              </Link>{" "}
+              <span>({exercise.category.toLowerCase()})</span>
               <div style={rowStyle}>
                 <label>
                   Sets{" "}

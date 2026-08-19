@@ -44,7 +44,9 @@ function SessionCard({
       <ul>
         {exercises.map((e) => (
           <li key={e.exerciseId}>
-            {e.exercise.name}
+            <Link href={`/exercise/${e.exerciseId}`} style={linkStyle}>
+              {e.exercise.name}
+            </Link>
             {e.sets && e.reps ? ` — ${e.sets}×${e.reps}` : ""}
             {e.durationSeconds ? ` — ${e.durationSeconds}s` : ""}
           </li>
@@ -63,6 +65,43 @@ function SessionCard({
           )}
         </button>
       )}
+    </div>
+  );
+}
+
+const TRIGGER_LABEL: Record<string, string> = {
+  SCHEDULED_ADJUSTMENT: "Scheduled adjustment",
+  ESCALATION_ROLLBACK: "Escalation rollback",
+};
+
+// Promotes the hold/rollback banner (transient, shown only right after a
+// sessionLog.create call above) into a revisitable "what changed and why"
+// moment — surfaced whenever the active regime isn't the original version.
+function AdjustmentExplainer({ regimeId, versionNumber }: { regimeId: string; versionNumber: number }) {
+  const eventsQuery = trpc.adjustmentEvent.list.useQuery();
+
+  if (versionNumber <= 1) return null;
+  if (!eventsQuery.data) return null;
+
+  const latestEvent = eventsQuery.data.find((e) => e.toRegimeVersionId === regimeId);
+  if (!latestEvent) return null;
+
+  return (
+    <div style={cardStyle}>
+      <h2>Your plan changed</h2>
+      <p>
+        <strong>
+          v{latestEvent.fromRegime.versionNumber} → v{latestEvent.toRegime.versionNumber}
+        </strong>{" "}
+        — {TRIGGER_LABEL[latestEvent.triggerType] ?? latestEvent.triggerType}
+      </p>
+      <p style={{ color: "#666", fontSize: "0.85rem" }}>{new Date(latestEvent.triggeredAt).toLocaleString()}</p>
+      <p style={{ marginTop: "0.4rem" }}>{latestEvent.rationale}</p>
+      <p style={{ marginTop: "0.5rem" }}>
+        <Link href="/adjustments" style={linkStyle}>
+          See full history →
+        </Link>
+      </p>
     </div>
   );
 }
@@ -128,6 +167,8 @@ export default function Home() {
       <h1>Today</h1>
       <p style={{ color: "#666" }}>Regime v{data.regime.versionNumber}</p>
       <p>{data.streak > 0 ? `${data.streak}-day streak` : "No streak yet — complete a session to start one"}</p>
+
+      <AdjustmentExplainer regimeId={data.regime.id} versionNumber={data.regime.versionNumber} />
 
       <SessionCard
         slot="MORNING"
@@ -218,6 +259,11 @@ export default function Home() {
         )}
       </div>
 
+      <p>
+        <Link href="/history" style={linkStyle}>
+          History →
+        </Link>
+      </p>
       <p>
         <Link href="/settings" style={linkStyle}>
           Settings →

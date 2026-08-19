@@ -1,5 +1,7 @@
+import { adjustmentEventRouter } from "./routers/adjustment-event";
 import { adminRouter } from "./routers/admin";
 import { adminExperimentsRouter } from "./routers/admin-experiments";
+import { exerciseRouter } from "./routers/exercise";
 import { healthRouter } from "./routers/health";
 import { onboardingRouter } from "./routers/onboarding";
 import { regimeRouter } from "./routers/regime";
@@ -14,6 +16,8 @@ export const appRouter = router({
   regime: regimeRouter,
   sessionLog: sessionLogRouter,
   workoutSession: workoutSessionRouter,
+  adjustmentEvent: adjustmentEventRouter,
+  exercise: exerciseRouter,
   admin: adminRouter,
   adminExperiments: adminExperimentsRouter,
   user: userRouter,

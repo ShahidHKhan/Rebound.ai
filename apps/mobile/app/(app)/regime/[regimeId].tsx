@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -185,7 +185,10 @@ export default function RegimeReviewScreen() {
           {group.map((exercise) => (
             <View key={exercise.exerciseId} style={shared.card}>
               <Text style={{ fontWeight: "700" }}>
-                {exercise.name} ({exercise.category.toLowerCase()})
+                <Link href={`/exercise/${exercise.exerciseId}`} style={shared.link}>
+                  {exercise.name}
+                </Link>{" "}
+                ({exercise.category.toLowerCase()})
               </Text>
 
               <Text style={shared.label}>Sets</Text>

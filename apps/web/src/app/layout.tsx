@@ -64,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </SignedOut>
               <SignedIn>
                 <Link href="/today">Today</Link>
+                <Link href="/history">History</Link>
                 <Link href="/settings">Settings</Link>
               </SignedIn>
               <LargeTextToggle />
