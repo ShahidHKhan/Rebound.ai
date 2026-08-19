@@ -195,6 +195,12 @@ TBD — flag to team: needs to happen before engineering can produce a real time
 
 *[link to Figma]*
 
+**Groundwork, not a substitute:** `page-map.md` (repo root, drafted 2026-08-18) is a researched page/screen
+inventory — 32 candidate screens across Marketing, Onboarding, Core Loop, Engagement, and Account/Settings/Commerce,
+benchmarked against Strong, Hevy, Whoop, MyFitnessPal, Peloton, Freeletics, Sword Health, Hinge Health, and
+Duolingo's structure, cross-referenced against what's actually built today. Useful as a starting menu for whoever
+does the real Figma pass, not a replacement for it.
+
 # Data Model (Draft)
 
 This is a starting schema, not final — "regime," "session," and "exercise" need concrete shapes before engineering can build against this PRD.
@@ -372,6 +378,7 @@ The Data Model defines the objects; this defines how they get measured against t
 **CI/CD & Version Control:** GitHub + GitHub Actions
 
 - Standard, well-documented, integrates cleanly with Vercel's deploy hooks.
+- **Branching model** (set up 2026-08-18, see `HANDOFF.md` for full operational detail): `feature/<name>` branches off `dev` → PR into `dev` (integration) → PR `dev` into `stage` (pre-prod) → PR `stage` into `main` (production). `main` and `stage` require PRs, no direct pushes; `dev`/`feature/*` stay open. No GitHub Actions workflows exist yet — CI (typecheck/tests on PRs into these branches) is still a TODO, not wired up.
 
 **Security & RLS:** Postgres Row Level Security (via Supabase, enforced using Clerk JWT claims) + standard OWASP practices + a secrets manager (Doppler or Vercel's built-in environment variable store)
 
