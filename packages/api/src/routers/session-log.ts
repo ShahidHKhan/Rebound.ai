@@ -8,6 +8,16 @@ import { startOfToday } from "../date-utils";
 import { protectedProcedure, router } from "../trpc";
 
 export const sessionLogRouter = router({
+  // History / trend screen: every SessionLog for this user, most recent
+  // first. Scoped to ctx.userId; RLS (session_logs_isolation) also enforces
+  // this at the DB layer.
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.sessionLog.findMany({
+      where: { userId: ctx.userId },
+      orderBy: { loggedAt: "desc" },
+    });
+  }),
+
   create: protectedProcedure
     .input(
       z.object({
