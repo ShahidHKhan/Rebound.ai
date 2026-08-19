@@ -172,6 +172,7 @@ export default function RegimeReviewScreen() {
 
   return (
     <ScrollView contentContainerStyle={shared.page}>
+      <Button label="← Back" variant="secondary" onPress={() => router.back()} />
       <Text style={shared.title}>Review your regime</Text>
       <Text>Adjust sets, reps, duration, or which session an exercise falls in, then activate.</Text>
 
