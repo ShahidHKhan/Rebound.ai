@@ -1,5 +1,6 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AccessibilityProvider } from "../lib/accessibility";
@@ -17,14 +18,19 @@ if (!CLERK_PUBLISHABLE_KEY) {
 // server middleware to protect routes at.
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <AccessibilityProvider>
-        <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
-          <TRPCProvider>
-            <Slot />
-          </TRPCProvider>
-        </ClerkProvider>
-      </AccessibilityProvider>
-    </SafeAreaProvider>
+    // Required once at the true root by react-native-gesture-handler (used
+    // by (app)/_layout.tsx's global swipe-left-for-home gesture) — must wrap
+    // everything, per the library's own setup docs.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AccessibilityProvider>
+          <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
+            <TRPCProvider>
+              <Slot />
+            </TRPCProvider>
+          </ClerkProvider>
+        </AccessibilityProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
