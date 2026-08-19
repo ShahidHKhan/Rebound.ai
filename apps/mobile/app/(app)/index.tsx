@@ -290,6 +290,9 @@ export default function HomeScreen() {
       <Link href="/history" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
         History
       </Link>
+      <Link href="/progress" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
+        Progress
+      </Link>
       <Link href="/settings" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
         Settings
       </Link>

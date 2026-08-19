@@ -83,6 +83,15 @@ export default function SettingsPage() {
       </div>
 
       <div style={cardStyle}>
+        <h2>Notifications</h2>
+        <p>
+          <Link href="/settings/notifications" style={linkStyle}>
+            Morning &amp; evening session times
+          </Link>
+        </p>
+      </div>
+
+      <div style={cardStyle}>
         <h2>Support</h2>
         <p>
           <Link href="/help" style={linkStyle}>

@@ -265,6 +265,11 @@ export default function Home() {
         </Link>
       </p>
       <p>
+        <Link href="/progress" style={linkStyle}>
+          Progress →
+        </Link>
+      </p>
+      <p>
         <Link href="/settings" style={linkStyle}>
           Settings →
         </Link>
