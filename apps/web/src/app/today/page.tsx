@@ -219,6 +219,11 @@ export default function Home() {
       </div>
 
       <p>
+        <Link href="/progress" style={linkStyle}>
+          Progress →
+        </Link>
+      </p>
+      <p>
         <Link href="/settings" style={linkStyle}>
           Settings →
         </Link>
