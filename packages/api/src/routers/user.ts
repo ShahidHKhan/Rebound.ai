@@ -1,10 +1,69 @@
 import { createClerkClient } from "@clerk/backend";
+import { z } from "zod";
 
 import { protectedProcedure, router } from "../trpc";
 
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
+// Matches the PRD's Business Model cancellation-flow reason codes exactly.
+const cancellationReasonCodeSchema = z.enum([
+  "TOO_EXPENSIVE",
+  "NOT_SEEING_RESULTS",
+  "PLAN_TOO_DEMANDING",
+  "PLAN_TOO_EASY",
+  "TECHNICAL_ISSUES",
+  "OTHER",
+]);
+
 export const userRouter = router({
+  // Profile + Billing screens' data in one round trip. Identity (name/email)
+  // deliberately excluded — Clerk's own useUser() owns that on both
+  // frontends, no name field was added to the User model for it.
+  getMe: protectedProcedure.query(async ({ ctx }) => {
+    const [user, firstScheduledAdjustment] = await Promise.all([
+      ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.userId },
+        select: { goalType: true, createdAt: true, wakeTimeMinutes: true, eveningTimeMinutes: true },
+      }),
+      // Business Model: "the paywall triggers at the first recursive regime
+      // adjustment" — deliberately SCHEDULED_ADJUSTMENT only. An
+      // ESCALATION_ROLLBACK is a safety guardrail firing, not the product
+      // completing a normal cycle, so it must never start a billing clock.
+      ctx.prisma.adjustmentEvent.findFirst({
+        where: { userId: ctx.userId, triggerType: "SCHEDULED_ADJUSTMENT" },
+        orderBy: { triggeredAt: "asc" },
+        select: { triggeredAt: true },
+      }),
+    ]);
+
+    return {
+      ...user,
+      billing: {
+        trialActive: firstScheduledAdjustment === null,
+        firstAdjustmentAt: firstScheduledAdjustment?.triggeredAt ?? null,
+      },
+    };
+  }),
+
+  // Cancellation-flow stub (Business Model: "capture a reason code at
+  // cancel time"). No real subscription exists to cancel during the beta
+  // (no Stripe integration anywhere in the repo yet) — this validates and
+  // records the reason server-side only, it never cancels anything. Not
+  // persisted to the DB: no schema change was made for this stub (see
+  // HANDOFF.md's live-Supabase-DB caution), so this is a placeholder for
+  // real churn-reason wiring once billing exists rather than a permanent
+  // record today.
+  submitCancellationFeedback: protectedProcedure
+    .input(z.object({ reasonCode: cancellationReasonCodeSchema, comment: z.string().max(1000).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      console.log(
+        `[cancellation feedback, beta preview] user=${ctx.userId} reason=${input.reasonCode}${
+          input.comment ? ` comment=${input.comment}` : ""
+        }`
+      );
+      return { received: true as const };
+    }),
+
   // Self-service account + data deletion. Deletes in dependency order
   // (matches the reset order packages/api/scripts/setup-day4-test-users.ts
   // already used) since none of these FKs cascade at the DB level; Regime
