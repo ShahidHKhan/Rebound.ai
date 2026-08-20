@@ -432,7 +432,7 @@ Run via `pnpm --filter @rebound/agents <script>` / `pnpm --filter @rebound/api <
 2. **Old Supabase project's (`axaaboapipyobkahyodi`) fate still undecided** — untouched either way.
 3. ~~`dev` → `main` promotion~~ — **done**, see immediately above, including the bundled Clerk redirect env var + redeploy. Remaining piece: a real signed-in browser click-through of the live URL hasn't happened yet.
 4. **Mobile click-through**: meaningfully started this session, one real bug found and fixed (regime review back button). Progress/History/Exercise-detail and the Account/Settings/Billing screens are the biggest still-unverified surface, on both mobile and now also the freshly-deployed live web production URL.
-5. **Clerk Production instance cutover** — still open, needs a custom domain first (older item, predates this session, unrelated to the redirect env var fix above — don't conflate the two).
+5. **Clerk Production instance cutover** — **deliberately deferred until the first iteration of the project is ready**, user's explicit call, not an oversight. Plan when it happens: buy a domain on Namecheap → add it to the Vercel project (Vercel gives the DNS records) → add those records in Namecheap → create a Clerk Production instance pointed at the domain (Clerk gives its own `clerk.`/`accounts.` CNAME records to verify, added in Namecheap too) → swap `pk_test_`/`sk_test_` for the new `pk_live_`/`sk_live_` keys in Vercel + local `.env` files → redeploy. Domain purchase and DNS steps need the user directly (their Namecheap/Vercel/Clerk accounts) — don't attempt to start this without them actively driving it.
 
 ## First things to do in a new session
 
