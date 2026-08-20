@@ -46,8 +46,12 @@ export const workoutSessionRouter = router({
       return { regime: null, sessions: [], todaysLog: null, streak };
     }
 
+    // Scoped to the active regime specifically, not just userId+date — a
+    // same-day regime change (restart, escalation rollback) must not pick
+    // up a *different* regime's leftover rows for today (see the schema
+    // comment on WorkoutSession's unique constraint for the bug this fixes).
     let sessions = await ctx.prisma.workoutSession.findMany({
-      where: { userId: ctx.userId, date: today },
+      where: { userId: ctx.userId, regimeVersionId: activeRegime.id, date: today },
       orderBy: { slot: "asc" },
     });
 
@@ -57,10 +61,11 @@ export const workoutSessionRouter = router({
     // by the time "today" rolls over, this query finds nothing, both
     // SessionCards render with no matching session, and their "Mark
     // complete" buttons end up permanently disabled (not erroring — just
-    // silently doing nothing when clicked, confirmed live 2026-08-20).
-    // Self-heals here rather than requiring a new cron: any day this loads
-    // with an active regime and no rows yet for today, create them using
-    // the same time computation regime.activate already uses.
+    // silently doing nothing when clicked, confirmed live 2026-08-20). The
+    // same branch also now covers a same-day regime change: if a different
+    // regime was active earlier today, this regime has zero rows of its
+    // own yet, and this creates them fresh (uncompleted) rather than
+    // reusing the old regime's.
     if (sessions.length === 0) {
       const user = await ctx.prisma.user.findUniqueOrThrow({
         where: { id: ctx.userId },
@@ -77,7 +82,7 @@ export const workoutSessionRouter = router({
       });
 
       sessions = await ctx.prisma.workoutSession.findMany({
-        where: { userId: ctx.userId, date: today },
+        where: { userId: ctx.userId, regimeVersionId: activeRegime.id, date: today },
         orderBy: { slot: "asc" },
       });
     }

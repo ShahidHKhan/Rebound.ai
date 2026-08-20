@@ -357,7 +357,13 @@ model WorkoutSession {
 
   exercisesCompleted WorkoutSessionExercise[]
 
-  @@unique([userId, date, slot])
+  // regimeVersionId included deliberately, not just [userId, date, slot] —
+  // a same-day regime change (restart, or an escalation rollback) used to
+  // collide with that day's existing rows from the *previous* regime and
+  // get silently skipped by regime.activate's skipDuplicates insert,
+  // leaving the new regime's exercises paired with the old regime's stale
+  // completedAt. Confirmed live 2026-08-21 via the restart-regime flow.
+  @@unique([userId, regimeVersionId, date, slot])
   @@map("workout_sessions")
 }
 
