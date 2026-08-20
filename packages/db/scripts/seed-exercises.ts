@@ -22,11 +22,30 @@ const LEVEL_MAP: Record<string, number> = {
   expert: 3,
 };
 
+// Confirmed against the live source data 2026-08-20: 13 distinct values
+// (including null). Previously declared nowhere on FreeExerciseDbEntry below
+// and silently dropped on every upsert.
+const EQUIPMENT_MAP: Record<string, "BODY_ONLY" | "MACHINE" | "OTHER" | "FOAM_ROLL" | "KETTLEBELLS" | "DUMBBELL" | "CABLE" | "BARBELL" | "BANDS" | "MEDICINE_BALL" | "EXERCISE_BALL" | "EZ_CURL_BAR"> = {
+  "body only": "BODY_ONLY",
+  machine: "MACHINE",
+  other: "OTHER",
+  "foam roll": "FOAM_ROLL",
+  kettlebells: "KETTLEBELLS",
+  dumbbell: "DUMBBELL",
+  cable: "CABLE",
+  barbell: "BARBELL",
+  bands: "BANDS",
+  "medicine ball": "MEDICINE_BALL",
+  "exercise ball": "EXERCISE_BALL",
+  "e-z curl bar": "EZ_CURL_BAR",
+};
+
 interface FreeExerciseDbEntry {
   id: string;
   name: string;
   category: string;
   level: string;
+  equipment: string | null;
   primaryMuscles: string[];
   secondaryMuscles: string[];
   instructions: string[];
@@ -52,6 +71,8 @@ async function main() {
       continue;
     }
 
+    const equipment = entry.equipment ? EQUIPMENT_MAP[entry.equipment] : undefined;
+
     await prisma.exercise.upsert({
       where: { externalId: entry.id },
       create: {
@@ -60,6 +81,7 @@ async function main() {
         category,
         targetMuscleGroups: [...entry.primaryMuscles, ...entry.secondaryMuscles],
         difficultyLevel: LEVEL_MAP[entry.level] ?? 1,
+        equipment,
         contraindications: [],
         source: "Free Exercise DB",
         media: { instructions: entry.instructions, images: entry.images },
@@ -69,6 +91,7 @@ async function main() {
         category,
         targetMuscleGroups: [...entry.primaryMuscles, ...entry.secondaryMuscles],
         difficultyLevel: LEVEL_MAP[entry.level] ?? 1,
+        equipment,
         media: { instructions: entry.instructions, images: entry.images },
       },
     });

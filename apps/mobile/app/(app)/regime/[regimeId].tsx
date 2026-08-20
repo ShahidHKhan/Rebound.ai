@@ -176,6 +176,20 @@ export default function RegimeReviewScreen() {
       <Text style={shared.title}>Review your regime</Text>
       <Text>Adjust sets, reps, duration, or which session an exercise falls in, then activate.</Text>
 
+      {regimeQuery.data?.sourcePreset && (
+        <View style={shared.card}>
+          <Text style={shared.label}>Program source</Text>
+          <Text>Based on the &ldquo;{regimeQuery.data.sourcePreset.name}&rdquo; protocol.</Text>
+          {[...new Set(regimeQuery.data.sourcePreset.slots.map((slot) => slot.rationale).filter((r): r is string => Boolean(r)))].map(
+            (rationale) => (
+              <Text key={rationale} style={{ marginTop: 4, fontSize: 12, color: "#666" }}>
+                • {rationale}
+              </Text>
+            )
+          )}
+        </View>
+      )}
+
       {([
         ["Morning", morning],
         ["Evening", evening],

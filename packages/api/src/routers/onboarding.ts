@@ -19,6 +19,23 @@ export const onboardingRouter = router({
       return { status: "red_flagged" as const, reasons: screening.reasons };
     }
 
+    // Regime-generation limiter: at most 1 new regime per Flow B cycle
+    // (7 days) while one is actively running — mirrors Flow B's own
+    // adjustment cadence (apps/web/src/app/api/cron/flow-b/route.ts).
+    // Deliberately restarting (regime.restart) ends the active regime
+    // first, which clears this immediately — the limiter targets repeated
+    // onboarding submissions while a regime is already active and young,
+    // not a genuine restart.
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentActiveRegime = await ctx.prisma.regime.findFirst({
+      where: { userId: ctx.userId, status: "ACTIVE", createdAt: { gte: sevenDaysAgo } },
+      select: { createdAt: true },
+    });
+    if (recentActiveRegime) {
+      return { status: "cooldown_active" as const, regimeCreatedAt: recentActiveRegime.createdAt };
+    }
+
     // Must happen before job creation — RegimeGenerationJob.userId is a
     // required foreign key to User.
     await upsertUserForOnboarding(ctx.userId, input);

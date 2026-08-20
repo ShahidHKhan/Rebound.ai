@@ -26,12 +26,14 @@ function SessionCard({
   data,
   onComplete,
   completing,
+  completeError,
 }: {
   slot: SessionSlot;
   label: string;
   data: TodayData;
   onComplete: (workoutSessionId: string) => void;
   completing: boolean;
+  completeError: string | null;
 }) {
   if (!data.regime) return null;
 
@@ -55,15 +57,22 @@ function SessionCard({
       {session?.completedAt ? (
         <p>Completed at {session.completedAt.toLocaleTimeString()}</p>
       ) : (
-        <button type="button" disabled={completing || !session} onClick={() => session && onComplete(session.id)}>
-          {completing ? (
-            <>
-              <span className="spinner" aria-hidden="true" /> Completing…
-            </>
-          ) : (
-            "Mark session complete"
+        <>
+          <button type="button" disabled={completing || !session} onClick={() => session && onComplete(session.id)}>
+            {completing ? (
+              <>
+                <span className="spinner" aria-hidden="true" /> Completing…
+              </>
+            ) : (
+              "Mark session complete"
+            )}
+          </button>
+          {completeError && (
+            <p role="alert" className="banner banner-error" style={{ marginTop: "0.5rem" }}>
+              {completeError}
+            </p>
           )}
-        </button>
+        </>
       )}
     </div>
   );
@@ -175,6 +184,7 @@ export default function Home() {
         label="Morning"
         data={data}
         completing={completeSession.isPending}
+        completeError={completeSession.isError ? completeSession.error.message : null}
         onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
       />
       <SessionCard
@@ -182,6 +192,7 @@ export default function Home() {
         label="Evening"
         data={data}
         completing={completeSession.isPending}
+        completeError={completeSession.isError ? completeSession.error.message : null}
         onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
       />
 

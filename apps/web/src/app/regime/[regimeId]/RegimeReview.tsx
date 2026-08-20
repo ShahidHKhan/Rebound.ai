@@ -31,6 +31,14 @@ const cardStyle: React.CSSProperties = {
 };
 const rowStyle: React.CSSProperties = { display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.5rem" };
 const numberInputStyle: React.CSSProperties = { width: 70 };
+const sourceStyle: React.CSSProperties = {
+  border: "1px solid #ddd",
+  borderRadius: 8,
+  padding: "0.75rem 1rem",
+  marginBottom: "1rem",
+  fontSize: "0.9rem",
+  color: "#444",
+};
 
 // Only what regime.activate's exerciseEditSchema needs — used to detect
 // whether the user actually changed anything before sending an edited list.
@@ -136,6 +144,26 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
     <main style={pageStyle}>
       <h1>Review your regime</h1>
       <p>Adjust sets, reps, duration, frequency, or which session an exercise falls in, then activate.</p>
+
+      {regimeQuery.data?.sourcePreset && (
+        <section style={sourceStyle}>
+          <strong>Program source:</strong> based on the &ldquo;{regimeQuery.data.sourcePreset.name}&rdquo; protocol.
+          {regimeQuery.data.sourcePreset.slots.some((slot) => slot.rationale) && (
+            <details style={{ marginTop: "0.4rem" }}>
+              <summary style={{ cursor: "pointer" }}>What this is based on</summary>
+              <ul style={{ marginTop: "0.4rem", paddingLeft: "1.2rem" }}>
+                {[
+                  ...new Set(
+                    regimeQuery.data.sourcePreset.slots.map((slot) => slot.rationale).filter((r): r is string => Boolean(r))
+                  ),
+                ].map((rationale) => (
+                  <li key={rationale}>{rationale}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </section>
+      )}
 
       {([
         ["Morning", morning],

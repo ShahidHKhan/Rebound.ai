@@ -12,10 +12,17 @@ export interface FallbackResult {
 // for the user, so they review/activate it exactly like a genuine LLM
 // draft — same flow, just a different (pre-vetted, conservative) source.
 export async function assignFallbackPreset(userId: string, riskTier: RiskTier): Promise<FallbackResult> {
+  // kind: "FALLBACK" is required on every branch — skeleton presets (kind:
+  // "SKELETON") can share the same riskTier value and have no exerciseList
+  // at all, so without this filter a skeleton could get cloned as if it
+  // were a concrete regime.
   const preset =
-    (await prisma.preset.findFirst({ where: { riskTier }, include: { exerciseList: true } })) ??
-    (await prisma.preset.findFirst({ where: { riskTier: null }, include: { exerciseList: true } })) ??
-    (await prisma.preset.findFirst({ include: { exerciseList: true } }));
+    (await prisma.preset.findFirst({ where: { kind: "FALLBACK", riskTier }, include: { exerciseList: true } })) ??
+    (await prisma.preset.findFirst({
+      where: { kind: "FALLBACK", riskTier: null },
+      include: { exerciseList: true },
+    })) ??
+    (await prisma.preset.findFirst({ where: { kind: "FALLBACK" }, include: { exerciseList: true } }));
 
   if (!preset) {
     throw new Error("No presets available for fallback — seed presets first (packages/db seed:presets).");

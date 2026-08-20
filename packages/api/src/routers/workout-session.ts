@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import type { Prisma, PrismaClient } from "@rebound/db";
 import { z } from "zod";
 
-import { startOfToday } from "../date-utils";
+import { computeSessionTimes, startOfToday } from "../date-utils";
 import { computeCurrentStreak } from "../streak";
 import { protectedProcedure, router } from "../trpc";
 
@@ -46,10 +46,46 @@ export const workoutSessionRouter = router({
       return { regime: null, sessions: [], todaysLog: null, streak };
     }
 
-    const sessions = await ctx.prisma.workoutSession.findMany({
-      where: { userId: ctx.userId, date: today },
+    // Scoped to the active regime specifically, not just userId+date — a
+    // same-day regime change (restart, escalation rollback) must not pick
+    // up a *different* regime's leftover rows for today (see the schema
+    // comment on WorkoutSession's unique constraint for the bug this fixes).
+    let sessions = await ctx.prisma.workoutSession.findMany({
+      where: { userId: ctx.userId, regimeVersionId: activeRegime.id, date: today },
       orderBy: { slot: "asc" },
     });
+
+    // Known gap (see HANDOFF): WorkoutSession rows were only ever created
+    // once, at regime.activate time, for that exact calendar day — nothing
+    // provisions the next day's rows. Concretely: activate at 11:22pm, and
+    // by the time "today" rolls over, this query finds nothing, both
+    // SessionCards render with no matching session, and their "Mark
+    // complete" buttons end up permanently disabled (not erroring — just
+    // silently doing nothing when clicked, confirmed live 2026-08-20). The
+    // same branch also now covers a same-day regime change: if a different
+    // regime was active earlier today, this regime has zero rows of its
+    // own yet, and this creates them fresh (uncompleted) rather than
+    // reusing the old regime's.
+    if (sessions.length === 0) {
+      const user = await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.userId },
+        select: { wakeTimeMinutes: true, eveningTimeMinutes: true },
+      });
+      const { morningTime, eveningTime } = computeSessionTimes(today, user.wakeTimeMinutes, user.eveningTimeMinutes);
+
+      await ctx.prisma.workoutSession.createMany({
+        data: [
+          { userId: ctx.userId, regimeVersionId: activeRegime.id, date: today, slot: "MORNING", scheduledAt: morningTime },
+          { userId: ctx.userId, regimeVersionId: activeRegime.id, date: today, slot: "EVENING", scheduledAt: eveningTime },
+        ],
+        skipDuplicates: true,
+      });
+
+      sessions = await ctx.prisma.workoutSession.findMany({
+        where: { userId: ctx.userId, regimeVersionId: activeRegime.id, date: today },
+        orderBy: { slot: "asc" },
+      });
+    }
 
     const todaysLog = await ctx.prisma.sessionLog.findFirst({
       where: { userId: ctx.userId, loggedAt: { gte: today } },

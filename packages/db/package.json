@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "seed": "tsx scripts/seed-exercises.ts",
     "seed:presets": "tsx scripts/seed-presets.ts",
+    "seed:skeletons": "tsx scripts/seed-preset-skeletons.ts",
     "seed:test-fixtures": "tsx scripts/seed-test-fixtures.ts"
   },
   "dependencies": {

@@ -124,6 +124,7 @@ export default function SettingsScreen() {
         <Button label="Profile" variant="secondary" onPress={() => router.push("/profile")} />
         <Button label="Subscription & Billing" variant="secondary" onPress={() => router.push("/billing")} />
         <Button label="Cancel plan" variant="secondary" onPress={() => router.push("/cancel")} />
+        <Button label="Restart regime" variant="secondary" onPress={() => router.push("/restart-regime")} />
       </View>
 
       <View style={shared.card}>

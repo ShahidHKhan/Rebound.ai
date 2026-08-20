@@ -80,6 +80,11 @@ export default function SettingsPage() {
             Cancel plan
           </Link>
         </p>
+        <p>
+          <Link href="/settings/restart-regime" style={linkStyle}>
+            Restart regime
+          </Link>
+        </p>
       </div>
 
       <div style={cardStyle}>

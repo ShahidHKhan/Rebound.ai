@@ -3,6 +3,7 @@ import { prisma } from "@rebound/db";
 import type { LlmCallSource, LlmFlow } from "@rebound/db";
 
 import { anthropic } from "./client";
+import { callGemini, isGeminiModel } from "./gemini-adapter";
 import { estimateCostUsd } from "./models";
 
 export interface LlmCallMeta {
@@ -26,7 +27,12 @@ export async function loggedMessagesCreate(
   const startedAt = Date.now();
 
   try {
-    const response = await anthropic.messages.create(params);
+    // Provider is inferred entirely from the model id prefix (all Claude
+    // ids start "claude-", all Gemini ids start "gemini-") — no separate
+    // provider field needed at any call site. See gemini-adapter.ts.
+    const response = isGeminiModel(params.model)
+      ? await callGemini(params)
+      : await anthropic.messages.create(params);
     const latencyMs = Date.now() - startedAt;
 
     await prisma.llmCall.create({

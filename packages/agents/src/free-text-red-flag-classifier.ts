@@ -3,8 +3,10 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { loggedMessagesCreate } from "./llm-call-logger";
 import { classifyRedFlagsTool } from "./tools/classify-red-flags";
 
-// Classification, not generation — Haiku is the right tier per Tech Stack.
-const CLASSIFIER_MODEL = "claude-haiku-4-5-20251001";
+// Classification, not generation — cheapest suitable tier (provider-swap
+// session, 2026-08-20; was Haiku 4.5, same reasoning applies to Gemini's
+// cheapest model). Claude remains selectable via the admin test-run picker.
+const CLASSIFIER_MODEL = "gemini-3.1-flash-lite";
 
 export interface FreeTextClassification {
   flagged: boolean;

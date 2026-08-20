@@ -25,6 +25,19 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => i * 30).map((minutes) 
 
 type GoalType = "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
 type InjurySeverity = "none" | "mild" | "moderate" | "severe";
+type Equipment =
+  | "BODY_ONLY"
+  | "MACHINE"
+  | "OTHER"
+  | "FOAM_ROLL"
+  | "KETTLEBELLS"
+  | "DUMBBELL"
+  | "CABLE"
+  | "BARBELL"
+  | "BANDS"
+  | "MEDICINE_BALL"
+  | "EXERCISE_BALL"
+  | "EZ_CURL_BAR";
 type RedFlagKey =
   | "severeSuddenPain"
   | "numbnessOrTingling"
@@ -53,6 +66,22 @@ const CONDITION_FLAG_OPTIONS: { value: string; label: string }[] = [
   { value: "autoimmune", label: "Autoimmune condition" },
   { value: "chronic", label: "Chronic condition" },
   { value: "post_surgical", label: "Post-surgical (cleared)" },
+];
+
+// Not exhaustive of Equipment (skips OTHER/EZ_CURL_BAR) — these are the
+// pieces a user would actually recognize and plausibly have at home.
+// BODY_ONLY is deliberately omitted since it's always assumed available,
+// not a pickable option.
+const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
+  { value: "BANDS", label: "Resistance bands" },
+  { value: "DUMBBELL", label: "Dumbbells" },
+  { value: "KETTLEBELLS", label: "Kettlebells" },
+  { value: "BARBELL", label: "Barbell" },
+  { value: "CABLE", label: "Cable machine" },
+  { value: "MACHINE", label: "Gym machines" },
+  { value: "FOAM_ROLL", label: "Foam roller" },
+  { value: "EXERCISE_BALL", label: "Exercise/stability ball" },
+  { value: "MEDICINE_BALL", label: "Medicine ball" },
 ];
 
 const RED_FLAG_OPTIONS: { value: RedFlagKey; label: string }[] = [
@@ -159,6 +188,7 @@ export default function OnboardingScreen() {
   const [goalType, setGoalType] = useState<GoalType[]>(["GENERAL_FITNESS"]);
   const [injurySeverity, setInjurySeverity] = useState<InjurySeverity[]>(["none"]);
   const [conditionFlags, setConditionFlags] = useState<string[]>([]);
+  const [availableEquipment, setAvailableEquipment] = useState<Equipment[]>([]);
   const [redFlags, setRedFlags] = useState<RedFlagKey[]>([]);
   const [targetMovement, setTargetMovement] = useState("");
   const [symptomsText, setSymptomsText] = useState("");
@@ -172,6 +202,7 @@ export default function OnboardingScreen() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [redFlagReasons, setRedFlagReasons] = useState<string[] | null>(null);
   const [crisisDetected, setCrisisDetected] = useState(false);
+  const [cooldownRegimeCreatedAt, setCooldownRegimeCreatedAt] = useState<Date | null>(null);
 
   const submit = trpc.onboarding.submit.useMutation({
     onSuccess: (result) => {
@@ -179,6 +210,8 @@ export default function OnboardingScreen() {
         setCrisisDetected(true);
       } else if (result.status === "red_flagged") {
         setRedFlagReasons(result.reasons);
+      } else if (result.status === "cooldown_active") {
+        setCooldownRegimeCreatedAt(new Date(result.regimeCreatedAt));
       } else {
         setJobId(result.jobId);
       }
@@ -230,6 +263,7 @@ export default function OnboardingScreen() {
       lifestyleContextText,
       wakeTimeMinutes: wakeTimeMinutes[0] ? Number(wakeTimeMinutes[0]) : undefined,
       eveningTimeMinutes: eveningTimeMinutes[0] ? Number(eveningTimeMinutes[0]) : undefined,
+      availableEquipment,
     });
   }
 
@@ -245,6 +279,25 @@ export default function OnboardingScreen() {
         <Text>• Crisis Text Line — text HOME to 741741 (US), available 24/7.</Text>
         <Text>• If you&apos;re in immediate danger, call 911 or your local emergency number.</Text>
         <Text>Please reach out to one of these resources or a trusted person before continuing.</Text>
+      </ScrollView>
+    );
+  }
+
+  if (cooldownRegimeCreatedAt) {
+    const availableAt = new Date(cooldownRegimeCreatedAt);
+    availableAt.setDate(availableAt.getDate() + 7);
+    return (
+      <ScrollView contentContainerStyle={shared.page}>
+        <Button label="← Back" variant="secondary" onPress={() => router.back()} />
+        <Text style={shared.title}>You already have an active regime</Text>
+        <Text>
+          To keep things sustainable, a new regime can only be generated once every 7 days while one is active. You
+          can wait until {availableAt.toLocaleDateString()}, or restart your current regime now from Settings to
+          start fresh immediately.
+        </Text>
+        <Link href="/restart-regime" style={shared.link}>
+          Restart my regime →
+        </Link>
       </ScrollView>
     );
   }
@@ -336,6 +389,13 @@ export default function OnboardingScreen() {
             onToggle={(v) => toggleMulti(conditionFlags, setConditionFlags, v)}
           />
 
+          <Text style={shared.label}>Do you have access to any of these?</Text>
+          <ChipGroup
+            options={EQUIPMENT_OPTIONS}
+            selected={availableEquipment}
+            onToggle={(v) => toggleMulti(availableEquipment, setAvailableEquipment, v)}
+          />
+
           <Text style={shared.label}>Symptoms</Text>
           <TextInput
             style={[shared.input, { minHeight: 80 }]}
@@ -409,6 +469,14 @@ export default function OnboardingScreen() {
               {conditionFlags.length
                 ? conditionFlags.map((f) => labelFor(CONDITION_FLAG_OPTIONS, f)).join(", ")
                 : "None"}
+            </Text>
+          </View>
+          <View style={shared.card}>
+            <Text style={shared.label}>Equipment available</Text>
+            <Text>
+              {availableEquipment.length
+                ? availableEquipment.map((eq) => labelFor(EQUIPMENT_OPTIONS, eq)).join(", ")
+                : "Bodyweight only"}
             </Text>
           </View>
           <View style={shared.card}>

@@ -52,12 +52,14 @@ function SessionCard({
   data,
   onComplete,
   completing,
+  completeError,
 }: {
   slot: SessionSlot;
   label: string;
   data: TodayData;
   onComplete: (workoutSessionId: string) => void;
   completing: boolean;
+  completeError: string | null;
 }) {
   const shared = useSharedStyles();
 
@@ -82,13 +84,20 @@ function SessionCard({
       {session?.completedAt ? (
         <Text>Completed at {session.completedAt.toLocaleTimeString()}</Text>
       ) : (
-        <Button
-          label="Mark session complete"
-          variant="secondary"
-          disabled={!session}
-          loading={completing}
-          onPress={() => session && onComplete(session.id)}
-        />
+        <>
+          <Button
+            label="Mark session complete"
+            variant="secondary"
+            disabled={!session}
+            loading={completing}
+            onPress={() => session && onComplete(session.id)}
+          />
+          {completeError && (
+            <View style={shared.errorBanner}>
+              <Text style={shared.error}>{completeError}</Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -213,6 +222,7 @@ export default function HomeScreen() {
         label="Morning"
         data={data}
         completing={completeSession.isPending}
+        completeError={completeSession.isError ? completeSession.error.message : null}
         onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
       />
       <SessionCard
@@ -220,6 +230,7 @@ export default function HomeScreen() {
         label="Evening"
         data={data}
         completing={completeSession.isPending}
+        completeError={completeSession.isError ? completeSession.error.message : null}
         onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
       />
 
