@@ -26,14 +26,22 @@ function withCors(response: Response, req: Request) {
 }
 
 async function handler(req: Request) {
+  // auth() is resolved here, in the outer handler Next.js invokes directly
+  // — not inside createContext below. createContext is called from deep
+  // inside fetchRequestHandler's own internals (a generic, non-Next.js-aware
+  // library), after it has already read/parsed the request body for batched
+  // POSTs — that extra hop lost Next.js's per-request async-context tracking
+  // that auth() depends on, so auth() intermittently returned a null userId
+  // specifically for POST/mutation calls while GET/query calls (no body to
+  // parse first) were unaffected. Confirmed live 2026-08-21: identical
+  // cookie, GET resolves a real userId, the POST moments later doesn't.
+  const { userId } = await auth();
+
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     req,
     router: appRouter,
-    createContext: async () => {
-      const { userId } = await auth();
-      return createInnerContext({ userId });
-    },
+    createContext: async () => createInnerContext({ userId }),
   });
   return withCors(response, req);
 }
