@@ -1,6 +1,15 @@
 packages:
   - "apps/*"
   - "packages/*"
+overrides:
+  # A stale nested expo-router@57.0.12 (buried inside @expo/cli's own
+  # dependency chain, unrelated to apps/mobile's actual runtime
+  # expo-router@57.0.14) pulled in react-native-gesture-handler@3.1.0
+  # alongside the real 2.32.0 apps/mobile actually depends on — two
+  # competing JS copies both trying to register the same native module
+  # threw "RNGestureHandlerModule.install is not a function" on launch.
+  # Forces every resolution to the one real version.
+  react-native-gesture-handler: 2.32.0
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
