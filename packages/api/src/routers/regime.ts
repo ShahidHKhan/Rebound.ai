@@ -3,7 +3,10 @@ import { validateRegime, validateStructure } from "@rebound/clinical-rules";
 import type { DraftRegime } from "@rebound/clinical-rules";
 import { z } from "zod";
 
+import { computeSessionTimes, startOfToday } from "../date-utils";
 import { protectedProcedure, router } from "../trpc";
+
+const restartReasonCodeSchema = z.enum(["GOALS_CHANGED", "STARTING_OVER", "OTHER"]);
 
 const exerciseEditSchema = z.object({
   exerciseId: z.string(),
@@ -22,6 +25,12 @@ export const regimeRouter = router({
         exerciseList: {
           orderBy: { orderIndex: "asc" },
           include: { exercise: true },
+        },
+        // Null for freeform-generated, USER_EDITED, or PRESET_FALLBACK
+        // regimes — the review screen only renders a "Program source"
+        // section when this is present.
+        sourcePreset: {
+          include: { slots: { orderBy: { orderIndex: "asc" } } },
         },
       },
     });
@@ -85,8 +94,7 @@ export const regimeRouter = router({
         }
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = startOfToday();
 
       // No inner $transaction here — ctx.prisma is already a transaction
       // client for the whole request (RLS middleware, packages/api/src/trpc.ts),
@@ -94,6 +102,17 @@ export const regimeRouter = router({
       if (input.exercises) {
         await ctx.prisma.regimeExercise.deleteMany({ where: { regimeId: regime.id } });
       }
+
+      // Defensive: without this, activating a second draft while one regime
+      // is already ACTIVE leaves two ACTIVE rows for the same user, and
+      // every "find the active regime" query elsewhere (workoutSession.today,
+      // sessionLog.create, flow-b-runner.ts) does an unordered findFirst —
+      // which one comes back would be arbitrary. Real, reachable today (two
+      // onboarding.submit calls, both drafts activated), not hypothetical.
+      await ctx.prisma.regime.updateMany({
+        where: { userId: ctx.userId, status: "ACTIVE", id: { not: regime.id } },
+        data: { status: "SUPERSEDED" },
+      });
 
       const updated = await ctx.prisma.regime.update({
         where: { id: regime.id },
@@ -119,22 +138,7 @@ export const regimeRouter = router({
         include: { exerciseList: true },
       });
 
-      // Daily Session Structure: morning "on wake", evening at a user-picked
-      // time. Falls back to the original 7am/6pm placeholders when the user
-      // hasn't supplied either at onboarding.
-      const morningTime = new Date(today);
-      if (user.wakeTimeMinutes != null) {
-        morningTime.setHours(Math.floor(user.wakeTimeMinutes / 60), user.wakeTimeMinutes % 60, 0, 0);
-      } else {
-        morningTime.setHours(7, 0, 0, 0);
-      }
-
-      const eveningTime = new Date(today);
-      if (user.eveningTimeMinutes != null) {
-        eveningTime.setHours(Math.floor(user.eveningTimeMinutes / 60), user.eveningTimeMinutes % 60, 0, 0);
-      } else {
-        eveningTime.setHours(18, 0, 0, 0);
-      }
+      const { morningTime, eveningTime } = computeSessionTimes(today, user.wakeTimeMinutes, user.eveningTimeMinutes);
 
       await ctx.prisma.workoutSession.createMany({
         data: [
@@ -157,5 +161,30 @@ export const regimeRouter = router({
       });
 
       return { regimeId: updated.id, exerciseCount: updated.exerciseList.length };
+    }),
+
+  // Self-service "start over" — ends the user's active regime (kept in
+  // history, not deleted) so they can go through onboarding again. Ending
+  // it explicitly is also what clears onboarding.submit's regime-generation
+  // cooldown immediately, rather than making them wait out the 7 days.
+  restart: protectedProcedure
+    .input(z.object({ reasonCode: restartReasonCodeSchema, comment: z.string().max(1000).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const activeRegime = await ctx.prisma.regime.findFirst({
+        where: { userId: ctx.userId, status: "ACTIVE" },
+      });
+
+      if (!activeRegime) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No active regime to restart." });
+      }
+
+      const endReason = input.comment ? `${input.reasonCode}: ${input.comment}` : input.reasonCode;
+
+      await ctx.prisma.regime.update({
+        where: { id: activeRegime.id },
+        data: { status: "ENDED", endReason },
+      });
+
+      return { success: true as const };
     }),
 });

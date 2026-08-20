@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "e2e-test": "dotenv -e .env -- tsx scripts/onboarding-e2e-test.ts",
     "escalation-e2e-test": "dotenv -e .env -- tsx scripts/escalation-e2e-test.ts",
+    "restart-regime-e2e-test": "dotenv -e .env -- tsx scripts/restart-regime-e2e-test.ts",
     "setup-cron-test-user": "dotenv -e .env -- tsx scripts/setup-cron-test-user.ts",
     "setup-day4-test-users": "dotenv -e .env -- tsx scripts/setup-day4-test-users.ts",
     "admin-experiments-e2e-test": "dotenv -e .env -- tsx scripts/admin-experiments-e2e-test.ts",
