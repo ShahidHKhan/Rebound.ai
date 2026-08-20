@@ -7,6 +7,19 @@ import { trpc } from "@/lib/trpc/client";
 
 type GoalType = "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
 type InjurySeverity = "none" | "mild" | "moderate" | "severe";
+type Equipment =
+  | "BODY_ONLY"
+  | "MACHINE"
+  | "OTHER"
+  | "FOAM_ROLL"
+  | "KETTLEBELLS"
+  | "DUMBBELL"
+  | "CABLE"
+  | "BARBELL"
+  | "BANDS"
+  | "MEDICINE_BALL"
+  | "EXERCISE_BALL"
+  | "EZ_CURL_BAR";
 
 interface RedFlagAnswers {
   severeSuddenPain: boolean;
@@ -45,6 +58,23 @@ const RED_FLAG_QUESTIONS: { key: keyof RedFlagAnswers; label: string }[] = [
     key: "cardiacSymptomsWithExertion",
     label: "Chest pain, dizziness, or shortness of breath during exertion",
   },
+];
+
+// Not exhaustive of Equipment (skips OTHER/EZ_CURL_BAR) — these are the
+// pieces a user would actually recognize and plausibly have at home for
+// injury recovery / mobility / strength work, the three things this
+// question exists for. BODY_ONLY is deliberately omitted from the list
+// itself since it's always assumed available, not a pickable option.
+const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
+  { value: "BANDS", label: "Resistance bands" },
+  { value: "DUMBBELL", label: "Dumbbells" },
+  { value: "KETTLEBELLS", label: "Kettlebells" },
+  { value: "BARBELL", label: "Barbell" },
+  { value: "CABLE", label: "Cable machine" },
+  { value: "MACHINE", label: "Gym machines" },
+  { value: "FOAM_ROLL", label: "Foam roller" },
+  { value: "EXERCISE_BALL", label: "Exercise/stability ball" },
+  { value: "MEDICINE_BALL", label: "Medicine ball" },
 ];
 
 const GOAL_OPTIONS: { value: GoalType; label: string }[] = [
@@ -131,6 +161,7 @@ export default function OnboardingPage() {
   const [goalType, setGoalType] = useState<GoalType>("GENERAL_FITNESS");
   const [injurySeverity, setInjurySeverity] = useState<InjurySeverity>("none");
   const [conditionFlags, setConditionFlags] = useState<string[]>([]);
+  const [availableEquipment, setAvailableEquipment] = useState<Equipment[]>([]);
   const [redFlags, setRedFlags] = useState<RedFlagAnswers>(initialRedFlags);
   const [targetMovement, setTargetMovement] = useState("");
   const [symptomsText, setSymptomsText] = useState("");
@@ -144,6 +175,7 @@ export default function OnboardingPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [redFlagReasons, setRedFlagReasons] = useState<string[] | null>(null);
   const [crisisDetected, setCrisisDetected] = useState(false);
+  const [cooldownRegimeCreatedAt, setCooldownRegimeCreatedAt] = useState<Date | null>(null);
 
   const submit = trpc.onboarding.submit.useMutation({
     onSuccess: (result) => {
@@ -151,6 +183,8 @@ export default function OnboardingPage() {
         setCrisisDetected(true);
       } else if (result.status === "red_flagged") {
         setRedFlagReasons(result.reasons);
+      } else if (result.status === "cooldown_active") {
+        setCooldownRegimeCreatedAt(new Date(result.regimeCreatedAt));
       } else {
         setJobId(result.jobId);
       }
@@ -167,6 +201,10 @@ export default function OnboardingPage() {
 
   function toggleConditionFlag(value: string) {
     setConditionFlags((prev) => (prev.includes(value) ? prev.filter((flag) => flag !== value) : [...prev, value]));
+  }
+
+  function toggleEquipment(value: Equipment) {
+    setAvailableEquipment((prev) => (prev.includes(value) ? prev.filter((eq) => eq !== value) : [...prev, value]));
   }
 
   // Advancing a step re-uses the browser's native constraint validation
@@ -202,6 +240,7 @@ export default function OnboardingPage() {
       lifestyleContextText,
       wakeTimeMinutes: wakeTime ? wakeHours * 60 + wakeMinutes : undefined,
       eveningTimeMinutes: eveningTime ? eveningHours * 60 + eveningMinutes : undefined,
+      availableEquipment,
     });
   }
 
@@ -223,6 +262,26 @@ export default function OnboardingPage() {
           <li>If you&apos;re in immediate danger, call 911 or your local emergency number.</li>
         </ul>
         <p>Please reach out to one of these resources or a trusted person before continuing.</p>
+      </main>
+    );
+  }
+
+  if (cooldownRegimeCreatedAt) {
+    const availableAt = new Date(cooldownRegimeCreatedAt);
+    availableAt.setDate(availableAt.getDate() + 7);
+    return (
+      <main style={pageStyle}>
+        <h1>You already have an active regime</h1>
+        <p>
+          To keep things sustainable, a new regime can only be generated once every 7 days while one is active. You
+          can wait until {availableAt.toLocaleDateString()}, or restart your current regime now from Settings to
+          start fresh immediately.
+        </p>
+        <p>
+          <Link href="/settings/restart-regime" style={{ color: "#2563eb", textDecoration: "underline" }}>
+            Restart my regime →
+          </Link>
+        </p>
       </main>
     );
   }
@@ -352,6 +411,20 @@ export default function OnboardingPage() {
               ))}
             </fieldset>
 
+            <fieldset>
+              <legend>Do you have access to any of these?</legend>
+              {EQUIPMENT_OPTIONS.map((option) => (
+                <label key={option.value} style={{ display: "block" }}>
+                  <input
+                    type="checkbox"
+                    checked={availableEquipment.includes(option.value)}
+                    onChange={() => toggleEquipment(option.value)}
+                  />{" "}
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
+
             <label style={fieldStyle}>
               Symptoms — describe what you&apos;re feeling
               <textarea maxLength={750} value={symptomsText} onChange={(e) => setSymptomsText(e.target.value)} rows={4} />
@@ -422,6 +495,16 @@ export default function OnboardingPage() {
                       .map((flag) => CONDITION_FLAG_OPTIONS.find((o) => o.value === flag)?.label ?? flag)
                       .join(", ")
                   : "None"}
+              </span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Equipment available</strong>
+              <span>
+                {availableEquipment.length
+                  ? availableEquipment
+                      .map((eq) => EQUIPMENT_OPTIONS.find((o) => o.value === eq)?.label ?? eq)
+                      .join(", ")
+                  : "Bodyweight only"}
               </span>
             </div>
             <div style={reviewRowStyle}>

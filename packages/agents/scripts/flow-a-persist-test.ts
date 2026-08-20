@@ -18,7 +18,7 @@ async function main() {
     update: {},
   });
 
-  const draft = await generateInitialRegime({
+  const { draft, sourcePresetId } = await generateInitialRegime({
     goalType: "MOBILITY",
     targetMovement: "touching toes without knee bend",
     riskTier: "GENERAL",
@@ -42,6 +42,7 @@ async function main() {
       versionNumber: 1,
       createdBy: "AGENT",
       status: "DRAFT",
+      sourcePresetId,
       exerciseList: {
         create: draft.exercises.map((exercise, index) => ({
           exerciseId: exercise.exerciseId,

@@ -1,6 +1,7 @@
 import { prisma } from "@rebound/db";
 import { checkRedFlags, determineRiskTier, validateRegime, validateStructure } from "@rebound/clinical-rules";
 import type { OnboardingAnswers } from "@rebound/clinical-rules";
+import type { Equipment } from "@rebound/db";
 
 import { classifyFreeTextRedFlags } from "./free-text-red-flag-classifier";
 import { generateInitialRegime } from "./flow-a";
@@ -15,6 +16,10 @@ export interface OnboardingSubmission {
   // when absent.
   wakeTimeMinutes?: number;
   eveningTimeMinutes?: number;
+  // Equipment the user has access to at home — defaults to [] (bodyweight-
+  // only) when omitted, same conservative-by-default spirit as the rest of
+  // onboarding.
+  availableEquipment?: Equipment[];
 }
 
 export type ScreeningResult =
@@ -75,14 +80,19 @@ export async function upsertUserForOnboarding(userId: string, submission: Onboar
       targetMovements: [submission.targetMovement],
       wakeTimeMinutes: submission.wakeTimeMinutes,
       eveningTimeMinutes: submission.eveningTimeMinutes,
+      availableEquipment: submission.availableEquipment ?? [],
     },
     // undefined fields are omitted by Prisma, not nulled — a re-submission
     // that skips these leaves any previously-set values alone rather than
-    // wiping them.
+    // wiping them. Same treatment for availableEquipment: only overwrite it
+    // when this submission actually answered the equipment question.
     update: {
       riskTier,
       wakeTimeMinutes: submission.wakeTimeMinutes,
       eveningTimeMinutes: submission.eveningTimeMinutes,
+      ...(submission.availableEquipment !== undefined
+        ? { availableEquipment: submission.availableEquipment }
+        : {}),
     },
   });
 }
@@ -96,13 +106,14 @@ export async function draftAndPersistRegime(
 ): Promise<{ regimeId: string; exerciseCount: number }> {
   const riskTier = determineRiskTier(submission.answers);
 
-  const draft = await generateInitialRegime(
+  const { draft, sourcePresetId } = await generateInitialRegime(
     {
       goalType: submission.answers.goalType,
       targetMovement: submission.targetMovement,
       riskTier,
       symptomsText: submission.symptomsText,
       lifestyleContextText: submission.lifestyleContextText,
+      availableEquipment: submission.availableEquipment,
     },
     { userId }
   );
@@ -133,6 +144,7 @@ export async function draftAndPersistRegime(
       versionNumber,
       createdBy: "AGENT",
       status: "DRAFT",
+      sourcePresetId,
       exerciseList: {
         create: draft.exercises.map((exercise, index) => ({
           exerciseId: exercise.exerciseId,

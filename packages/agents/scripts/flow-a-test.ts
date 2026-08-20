@@ -3,7 +3,7 @@ import { validateRegime, validateStructure } from "@rebound/clinical-rules";
 import { generateInitialRegime } from "../src/flow-a";
 
 async function main() {
-  const draft = await generateInitialRegime({
+  const { draft, sourcePresetId } = await generateInitialRegime({
     goalType: "MOBILITY",
     targetMovement: "touching toes without knee bend",
     riskTier: "GENERAL",
@@ -11,6 +11,7 @@ async function main() {
     lifestyleContextText: "Busy office worker, sits most of the day, ~20 minutes free per session.",
   });
 
+  console.log("Source preset (skeleton used, or null for freeform):", sourcePresetId);
   console.log("Draft regime:", JSON.stringify(draft, null, 2));
 
   const structural = validateStructure(draft);

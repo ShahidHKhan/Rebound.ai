@@ -21,6 +21,21 @@ const onboardingAnswersSchema = z.object({
 // token cost and shrinks the prompt-injection surface. Shared by the real
 // onboarding.submit procedure and admin ONBOARDING-type test fixtures, so
 // a fixture is always guaranteed to match what real onboarding accepts.
+const EQUIPMENT_VALUES = [
+  "BODY_ONLY",
+  "MACHINE",
+  "OTHER",
+  "FOAM_ROLL",
+  "KETTLEBELLS",
+  "DUMBBELL",
+  "CABLE",
+  "BARBELL",
+  "BANDS",
+  "MEDICINE_BALL",
+  "EXERCISE_BALL",
+  "EZ_CURL_BAR",
+] as const;
+
 export const onboardingSubmissionSchema = z.object({
   answers: onboardingAnswersSchema,
   targetMovement: z.string().min(1).max(200),
@@ -31,6 +46,10 @@ export const onboardingSubmissionSchema = z.object({
   // when either is missing, so skipping these doesn't block onboarding.
   wakeTimeMinutes: z.number().int().min(0).max(1439).optional(),
   eveningTimeMinutes: z.number().int().min(0).max(1439).optional(),
+  // Equipment the user has access to at home. Omitted/empty means
+  // bodyweight-only — Exercise search always allows BODY_ONLY/unrecorded
+  // equipment regardless of this list (packages/agents/src/tools/search-exercises.ts).
+  availableEquipment: z.array(z.enum(EQUIPMENT_VALUES)).optional(),
 });
 
 const draftRegimeExerciseSchema = z.object({

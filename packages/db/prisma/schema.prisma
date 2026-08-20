@@ -53,6 +53,33 @@ enum RegimeCreatedBy {
   PRESET_FALLBACK
 }
 
+// Free Exercise DB's own equipment taxonomy (confirmed against the live
+// source data 2026-08-20 — 13 distinct values including null). Previously
+// silently dropped by seed-exercises.ts; now captured so exercises can be
+// filtered to what a user actually has access to.
+enum Equipment {
+  BODY_ONLY
+  MACHINE
+  OTHER
+  FOAM_ROLL
+  KETTLEBELLS
+  DUMBBELL
+  CABLE
+  BARBELL
+  BANDS
+  MEDICINE_BALL
+  EXERCISE_BALL
+  EZ_CURL_BAR
+}
+
+enum PresetKind {
+  // Existing conservative presets — assignFallbackPreset's zero-LLM path.
+  FALLBACK
+  // A slotted protocol shape Flow A retrieves and fills. Has PresetSlot rows
+  // instead of PresetExercise rows.
+  SKELETON
+}
+
 enum RegimeStatus {
   DRAFT
   ACTIVE
@@ -129,6 +156,12 @@ model User {
   wakeTimeMinutes    Int?
   eveningTimeMinutes Int?
 
+  // Equipment the user has access to at home, captured at onboarding.
+  // Empty (the default) means bodyweight-only — exercises with equipment
+  // BODY_ONLY or no equipment recorded are always eligible regardless of
+  // this list; see searchExercises in packages/agents.
+  availableEquipment Equipment[]
+
   // Set from the admin panel; checked by both the escalation monitor and
   // Flow B before either takes action on this user.
   manualHold       Boolean @default(false)
@@ -152,6 +185,9 @@ model Exercise {
 
   targetMuscleGroups String[]
   difficultyLevel    Int
+  // Null means Free Exercise DB recorded no equipment for this entry
+  // (distinct from BODY_ONLY, which is an explicit "no equipment needed").
+  equipment          Equipment?
   // No PT-annotated contraindications in v1 (Free Exercise DB has none) —
   // field exists for the deferred PT-annotated content phase.
   contraindications  String[]
@@ -181,6 +217,13 @@ model Regime {
 
   status    RegimeStatus @default(ACTIVE)
   endReason String?
+
+  // Set when Flow A builds this regime from a skeleton Preset (kind:
+  // SKELETON) rather than the old fully-freeform path — lets the review UI
+  // show which protocol shape and literature citation backed this regime.
+  // Null for freeform-generated, USER_EDITED, or PRESET_FALLBACK regimes.
+  sourcePresetId String?
+  sourcePreset   Preset? @relation(fields: [sourcePresetId], references: [id])
 
   parentRegimeId String?
   parentRegime   Regime?  @relation("RegimeHistory", fields: [parentRegimeId], references: [id])
@@ -222,14 +265,27 @@ model RegimeExercise {
 // when Flow A fails to produce a valid regime (LLM Reliability & Failure Handling).
 
 model Preset {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
   description String?
   riskTier    RiskTier?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime   @default(now())
+
+  // Distinguishes a concrete fallback regime from a slotted skeleton sharing
+  // the same riskTier value — see PresetKind above.
+  kind PresetKind @default(FALLBACK)
+
+  // Skeleton retrieval keys. goalType narrows by intent (injury recovery vs.
+  // general fitness); bodyRegionTags is keyword-matched against the user's
+  // free-text targetMovement/conditionFlags (targetMovement is unconstrained
+  // free text, not an enum, so this can't be a structured foreign key).
+  goalType       GoalType?
+  bodyRegionTags String[]
 
   exerciseList         PresetExercise[]
+  slots                PresetSlot[]
   regimeGenerationJobs RegimeGenerationJob[]
+  regimes              Regime[]
 
   @@map("presets")
 }
@@ -249,6 +305,37 @@ model PresetExercise {
   orderIndex      Int
 
   @@map("preset_exercises")
+}
+
+model PresetSlot {
+  id       String @id @default(cuid())
+  presetId String
+  preset   Preset @relation(fields: [presetId], references: [id], onDelete: Cascade)
+
+  sessionSlot SessionSlot
+  orderIndex  Int
+  // Short human-readable intent, e.g. "Primary shoulder mobility drill" —
+  // shown to the LLM alongside the narrowed search_exercises candidates so
+  // it knows what the slot is for, not just its filter constraints.
+  label String
+
+  // Constraints search_exercises gets scoped to when filling this slot.
+  exerciseCategory ExerciseCategory?
+  muscleGroupTags  String[]
+  maxDifficulty    Int?
+
+  // Suggested dosing — the LLM personalizes within these, doesn't invent
+  // from scratch. Same optional-field shape as PresetExercise.
+  suggestedSets            Int?
+  suggestedReps            Int?
+  suggestedDurationSeconds Int?
+  suggestedFrequency       String?
+
+  // Literature grounding for why this slot exists — audit trail back to a
+  // named source, not just "the LLM said so."
+  rationale String?
+
+  @@map("preset_slots")
 }
 
 // ── Workout Session ──────────────────────────────────────────────────────

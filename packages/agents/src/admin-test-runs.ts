@@ -82,7 +82,7 @@ export async function runFlowATestRun(
   return persistTestRunResult(testRun.id, async () => {
     const riskTier = determineRiskTier(payload.answers);
 
-    const draft = await generateInitialRegime(
+    const { draft, sourcePresetId } = await generateInitialRegime(
       {
         goalType: payload.answers.goalType,
         targetMovement: payload.targetMovement,
@@ -95,13 +95,13 @@ export async function runFlowATestRun(
 
     const structural = validateStructure(draft);
     if (!structural.success) {
-      return { status: "INVALID", result: { riskTier, draft, issues: structural.error.issues } };
+      return { status: "INVALID", result: { riskTier, draft, sourcePresetId, issues: structural.error.issues } };
     }
 
     const clinical = validateRegime(draft, riskTier);
     return {
       status: clinical.valid ? "VALID" : "INVALID",
-      result: { riskTier, draft, issues: clinical.valid ? [] : clinical.issues },
+      result: { riskTier, draft, sourcePresetId, issues: clinical.valid ? [] : clinical.issues },
     };
   });
 }
