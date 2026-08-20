@@ -14,6 +14,8 @@ allowBuilds:
   utf-8-validate: false
   esbuild: true
   dtrace-provider: false
+  '@google/genai': true
+  protobufjs: true
 minimumReleaseAgeExclude:
   - expo-dev-client@57.0.12
   - expo-dev-launcher@57.0.12
