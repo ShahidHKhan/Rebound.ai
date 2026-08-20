@@ -1,3 +1,12 @@
+// Must be the very first import in the app — react-native-gesture-handler
+// patches global behavior that expo-router's own navigation internals rely
+// on at import time. Anywhere later than this (including just above the
+// GestureHandlerRootView usage below) is too late and throws cryptic
+// runtime errors ("undefined is not a function") that don't obviously point
+// back to this. This is Expo Router's own documented pattern for it, not a
+// plain React Navigation index.js shim.
+import "react-native-gesture-handler";
+
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
