@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { trpc } from "@/lib/trpc/client";
 
@@ -47,10 +47,86 @@ const RED_FLAG_QUESTIONS: { key: keyof RedFlagAnswers; label: string }[] = [
   },
 ];
 
+const GOAL_OPTIONS: { value: GoalType; label: string }[] = [
+  { value: "GENERAL_FITNESS", label: "General fitness" },
+  { value: "INJURY_RECOVERY", label: "Injury recovery" },
+  { value: "STRENGTH", label: "Strength" },
+  { value: "MOBILITY", label: "Mobility" },
+];
+
+const SEVERITY_OPTIONS: { value: InjurySeverity; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "mild", label: "Mild" },
+  { value: "moderate", label: "Moderate" },
+  { value: "severe", label: "Severe" },
+];
+
+// "Building your plan" moment: cycled status copy shown while Flow A drafts
+// the regime, wrapping the existing 2s-interval poll unchanged (see the
+// jobStatus query below) — this only changes what's rendered while pending.
+const BUILDING_MESSAGES = [
+  "Reviewing your goals…",
+  "Screening for safety…",
+  "Drafting your first regime…",
+];
+const BUILDING_MESSAGE_INTERVAL_MS = 2200;
+
+function BuildingPlanStatus() {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((i) => (i + 1) % BUILDING_MESSAGES.length);
+    }, BUILDING_MESSAGE_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <p style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+      <span className="spinner spinner-lg" aria-hidden="true" />
+      <span aria-live="polite">{BUILDING_MESSAGES[messageIndex]}</span>
+    </p>
+  );
+}
+
+const TOTAL_STEPS = 4;
+const STEP_TITLES = [
+  "What brings you here?",
+  "Tell us about your training and health",
+  "Any red flags?",
+  "Review and submit",
+];
+
 const fieldStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "0.25rem" };
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
+const progressWrapStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "0.5rem" };
+const progressDotsStyle: React.CSSProperties = { display: "flex", gap: "0.5rem" };
+const dotStyle: React.CSSProperties = { width: 10, height: 10, borderRadius: "50%", backgroundColor: "#d1d5db" };
+const dotActiveStyle: React.CSSProperties = { backgroundColor: "#2563eb" };
+const progressTextStyle: React.CSSProperties = { fontSize: "0.875rem", color: "#4b5563", margin: 0 };
+const navRowStyle: React.CSSProperties = { display: "flex", justifyContent: "space-between", gap: "1rem" };
+const reviewRowStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "0.15rem" };
+const reviewListStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "0.75rem" };
+
+function ProgressIndicator({ step }: { step: number }) {
+  return (
+    <div style={progressWrapStyle}>
+      <div style={progressDotsStyle} aria-hidden="true">
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((n) => (
+          <span key={n} style={{ ...dotStyle, ...(n <= step ? dotActiveStyle : {}) }} />
+        ))}
+      </div>
+      <p style={progressTextStyle}>
+        Step {step} of {TOTAL_STEPS}: {STEP_TITLES[step - 1]}
+      </p>
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
+  const [step, setStep] = useState(1);
+  const formRef = useRef<HTMLFormElement>(null);
+
   const [age, setAge] = useState("");
   const [goalType, setGoalType] = useState<GoalType>("GENERAL_FITNESS");
   const [injurySeverity, setInjurySeverity] = useState<InjurySeverity>("none");
@@ -91,6 +167,22 @@ export default function OnboardingPage() {
 
   function toggleConditionFlag(value: string) {
     setConditionFlags((prev) => (prev.includes(value) ? prev.filter((flag) => flag !== value) : [...prev, value]));
+  }
+
+  // Advancing a step re-uses the browser's native constraint validation
+  // (required/min/max/maxLength) against whatever fields are currently
+  // mounted — same rules as before, just checked per-step instead of all at
+  // once at the very end.
+  function goNext() {
+    if (formRef.current?.checkValidity()) {
+      setStep((s) => Math.min(TOTAL_STEPS, s + 1));
+    } else {
+      formRef.current?.reportValidity();
+    }
+  }
+
+  function goBack() {
+    setStep((s) => Math.max(1, s - 1));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -184,10 +276,7 @@ export default function OnboardingPage() {
             <p>We couldn&apos;t generate a regime right now. This has been flagged for review.</p>
           </>
         ) : (
-          <p>
-            <span className="spinner" aria-hidden="true" /> Drafting your two-session regime — this takes a few
-            seconds…
-          </p>
+          <BuildingPlanStatus />
         )}
       </main>
     );
@@ -196,105 +285,197 @@ export default function OnboardingPage() {
   return (
     <main style={pageStyle}>
       <h1>Tell us about you</h1>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        <label style={fieldStyle}>
-          Age
-          <input type="number" required min={13} max={120} value={age} onChange={(e) => setAge(e.target.value)} />
-        </label>
-
-        <label style={fieldStyle}>
-          Primary goal
-          <select value={goalType} onChange={(e) => setGoalType(e.target.value as GoalType)}>
-            <option value="GENERAL_FITNESS">General fitness</option>
-            <option value="INJURY_RECOVERY">Injury recovery</option>
-            <option value="STRENGTH">Strength</option>
-            <option value="MOBILITY">Mobility</option>
-          </select>
-        </label>
-
-        <label style={fieldStyle}>
-          Target movement (e.g. &quot;squat without knee pain&quot;)
-          <input
-            type="text"
-            required
-            maxLength={200}
-            value={targetMovement}
-            onChange={(e) => setTargetMovement(e.target.value)}
-          />
-        </label>
-
-        <label style={fieldStyle}>
-          Injury severity
-          <select value={injurySeverity} onChange={(e) => setInjurySeverity(e.target.value as InjurySeverity)}>
-            <option value="none">None</option>
-            <option value="mild">Mild</option>
-            <option value="moderate">Moderate</option>
-            <option value="severe">Severe</option>
-          </select>
-        </label>
-
-        <fieldset>
-          <legend>Do any of these apply to you?</legend>
-          {CONDITION_FLAG_OPTIONS.map((option) => (
-            <label key={option.value} style={{ display: "block" }}>
+      <ProgressIndicator step={step} />
+      <form ref={formRef} onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginTop: "1rem" }}>
+        {step === 1 && (
+          <>
+            <label style={fieldStyle}>
+              Age
               <input
-                type="checkbox"
-                checked={conditionFlags.includes(option.value)}
-                onChange={() => toggleConditionFlag(option.value)}
-              />{" "}
-              {option.label}
+                type="number"
+                required
+                min={13}
+                max={120}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+              />
             </label>
-          ))}
-        </fieldset>
 
-        <fieldset>
-          <legend>Please flag anything below that applies right now</legend>
-          {RED_FLAG_QUESTIONS.map(({ key, label }) => (
-            <label key={key} style={{ display: "block" }}>
+            <label style={fieldStyle}>
+              Primary goal
+              <select value={goalType} onChange={(e) => setGoalType(e.target.value as GoalType)}>
+                {GOAL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label style={fieldStyle}>
+              Target movement (e.g. &quot;squat without knee pain&quot;)
               <input
-                type="checkbox"
-                checked={redFlags[key]}
-                onChange={(e) => setRedFlags((prev) => ({ ...prev, [key]: e.target.checked }))}
-              />{" "}
-              {label}
+                type="text"
+                required
+                maxLength={200}
+                value={targetMovement}
+                onChange={(e) => setTargetMovement(e.target.value)}
+              />
             </label>
-          ))}
-        </fieldset>
+          </>
+        )}
 
-        <label style={fieldStyle}>
-          Symptoms — describe what you&apos;re feeling
-          <textarea maxLength={750} value={symptomsText} onChange={(e) => setSymptomsText(e.target.value)} rows={4} />
-        </label>
+        {step === 2 && (
+          <>
+            <label style={fieldStyle}>
+              Injury severity
+              <select value={injurySeverity} onChange={(e) => setInjurySeverity(e.target.value as InjurySeverity)}>
+                {SEVERITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label style={fieldStyle}>
-          Lifestyle context — activity level, job, etc.
-          <textarea
-            maxLength={750}
-            value={lifestyleContextText}
-            onChange={(e) => setLifestyleContextText(e.target.value)}
-            rows={4}
-          />
-        </label>
+            <fieldset>
+              <legend>Do any of these apply to you?</legend>
+              {CONDITION_FLAG_OPTIONS.map((option) => (
+                <label key={option.value} style={{ display: "block" }}>
+                  <input
+                    type="checkbox"
+                    checked={conditionFlags.includes(option.value)}
+                    onChange={() => toggleConditionFlag(option.value)}
+                  />{" "}
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
 
-        <label style={fieldStyle}>
-          Preferred wake time (morning session)
-          <input type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} />
-        </label>
+            <label style={fieldStyle}>
+              Symptoms — describe what you&apos;re feeling
+              <textarea maxLength={750} value={symptomsText} onChange={(e) => setSymptomsText(e.target.value)} rows={4} />
+            </label>
 
-        <label style={fieldStyle}>
-          Preferred evening session time
-          <input type="time" value={eveningTime} onChange={(e) => setEveningTime(e.target.value)} />
-        </label>
+            <label style={fieldStyle}>
+              Lifestyle context — activity level, job, etc.
+              <textarea
+                maxLength={750}
+                value={lifestyleContextText}
+                onChange={(e) => setLifestyleContextText(e.target.value)}
+                rows={4}
+              />
+            </label>
 
-        <button type="submit" disabled={submit.isPending}>
-          {submit.isPending ? (
-            <>
-              <span className="spinner" aria-hidden="true" /> Submitting…
-            </>
+            <label style={fieldStyle}>
+              Preferred wake time (morning session)
+              <input type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} />
+            </label>
+
+            <label style={fieldStyle}>
+              Preferred evening session time
+              <input type="time" value={eveningTime} onChange={(e) => setEveningTime(e.target.value)} />
+            </label>
+          </>
+        )}
+
+        {step === 3 && (
+          <fieldset>
+            <legend>Please flag anything below that applies right now</legend>
+            {RED_FLAG_QUESTIONS.map(({ key, label }) => (
+              <label key={key} style={{ display: "block" }}>
+                <input
+                  type="checkbox"
+                  checked={redFlags[key]}
+                  onChange={(e) => setRedFlags((prev) => ({ ...prev, [key]: e.target.checked }))}
+                />{" "}
+                {label}
+              </label>
+            ))}
+          </fieldset>
+        )}
+
+        {step === 4 && (
+          <div style={reviewListStyle}>
+            <p>Double-check your answers, then submit.</p>
+            <div style={reviewRowStyle}>
+              <strong>Age</strong>
+              <span>{age || "—"}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Primary goal</strong>
+              <span>{GOAL_OPTIONS.find((o) => o.value === goalType)?.label}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Target movement</strong>
+              <span>{targetMovement || "—"}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Injury severity</strong>
+              <span>{SEVERITY_OPTIONS.find((o) => o.value === injurySeverity)?.label}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Conditions</strong>
+              <span>
+                {conditionFlags.length
+                  ? conditionFlags
+                      .map((flag) => CONDITION_FLAG_OPTIONS.find((o) => o.value === flag)?.label ?? flag)
+                      .join(", ")
+                  : "None"}
+              </span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Symptoms</strong>
+              <span>{symptomsText || "—"}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Lifestyle context</strong>
+              <span>{lifestyleContextText || "—"}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Preferred wake time</strong>
+              <span>{wakeTime || "—"}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Preferred evening time</strong>
+              <span>{eveningTime || "—"}</span>
+            </div>
+            <div style={reviewRowStyle}>
+              <strong>Red flags</strong>
+              <span>
+                {RED_FLAG_QUESTIONS.filter(({ key }) => redFlags[key])
+                  .map(({ label }) => label)
+                  .join(", ") || "None selected"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div style={navRowStyle}>
+          {step > 1 ? (
+            <button type="button" onClick={goBack}>
+              ← Back
+            </button>
           ) : (
-            "Continue"
+            <span />
           )}
-        </button>
+
+          {step < TOTAL_STEPS ? (
+            <button type="button" onClick={goNext}>
+              Next →
+            </button>
+          ) : (
+            <button type="submit" disabled={submit.isPending}>
+              {submit.isPending ? (
+                <>
+                  <span className="spinner" aria-hidden="true" /> Submitting…
+                </>
+              ) : (
+                "Continue"
+              )}
+            </button>
+          )}
+        </div>
 
         {submit.isError && (
           <p role="alert" className="banner banner-error">

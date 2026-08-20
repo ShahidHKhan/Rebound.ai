@@ -30,7 +30,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Rebound.ai",
-  description: "AI-powered physical therapy app",
+  description:
+    "An AI-adjusted daily exercise plan that keeps you moving toward your next PR instead of sidelined by pain.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -44,19 +45,37 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <header
             style={{
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               alignItems: "center",
               padding: "1rem 2rem",
               gap: "1rem",
+              flexWrap: "wrap",
             }}
           >
-            <LargeTextToggle />
-            <SignedOut>
-              <SignInButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
+            <Link href="/" style={{ fontWeight: 700, color: "inherit", textDecoration: "none" }}>
+              Rebound.ai
+            </Link>
+            <nav style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+              <SignedOut>
+                <Link href="/how-it-works">How it works</Link>
+                <Link href="/safety">Safety</Link>
+                <Link href="/pricing">Pricing</Link>
+                <Link href="/about">About</Link>
+              </SignedOut>
+              <SignedIn>
+                <Link href="/today">Today</Link>
+                <Link href="/history">History</Link>
+                <Link href="/progress">Progress</Link>
+                <Link href="/settings">Settings</Link>
+              </SignedIn>
+              <LargeTextToggle />
+              <SignedOut>
+                <SignInButton />
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </nav>
           </header>
           <TRPCProvider>{children}</TRPCProvider>
           <footer

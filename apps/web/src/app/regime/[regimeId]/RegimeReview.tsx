@@ -101,7 +101,7 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
           ✓ {activated.exerciseCount} exercises are now live, split across your morning and evening sessions.
         </p>
         <p>
-          <Link href="/" style={{ color: "#2563eb", textDecoration: "underline" }}>
+          <Link href="/today" style={{ color: "#2563eb", textDecoration: "underline" }}>
             Go to today&apos;s sessions →
           </Link>
         </p>
@@ -146,7 +146,10 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
           {group.length === 0 && <p>No exercises assigned.</p>}
           {group.map((exercise) => (
             <div key={exercise.exerciseId} style={cardStyle}>
-              <strong>{exercise.name}</strong> <span>({exercise.category.toLowerCase()})</span>
+              <Link href={`/exercise/${exercise.exerciseId}`} style={{ fontWeight: 700 }}>
+                {exercise.name}
+              </Link>{" "}
+              <span>({exercise.category.toLowerCase()})</span>
               <div style={rowStyle}>
                 <label>
                   Sets{" "}

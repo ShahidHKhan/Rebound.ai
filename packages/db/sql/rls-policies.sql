@@ -14,8 +14,15 @@
 -- these fields), so they must be double-quoted here — Postgres folds
 -- unquoted identifiers to lowercase.
 --
--- Exercise / Preset / PresetExercise are intentionally excluded — shared
--- library content, not user-scoped.
+-- Exercise / Preset / PresetExercise / LlmCall / TestFixture / TestRun /
+-- Scenario are not user-scoped, so they were originally left with RLS
+-- disabled entirely on the theory that "not user data" meant "doesn't need
+-- a policy." Supabase's own security linter correctly flagged that as a
+-- real gap (`rls_disabled_in_public`) 2026-08-19: RLS being *disabled* — not
+-- just policy-free — means every public-schema table is exposed wide open
+-- through Supabase's auto-generated PostgREST REST API regardless of
+-- whether this app's own code happens to use that API. See below for how
+-- each of the two categories is actually locked down.
 
 -- users: the tenant root, keyed by id (Clerk's user id) rather than a
 -- separate userId column.
@@ -90,3 +97,39 @@ CREATE POLICY workout_session_exercises_isolation ON workout_session_exercises
     WHERE ws.id = workout_session_exercises."workoutSessionId"
       AND (ws."userId" = current_setting('app.user_id', true) OR current_setting('app.is_admin', true) = 'true')
   ));
+
+-- exercises / presets / preset_exercises: shared library content, read by
+-- every user via the restricted `rebound_app` role (packages/api's
+-- protectedProcedure — e.g. exercise.getById, regime.getById's exercise
+-- joins, workoutSession.today). RLS must be enabled (closes the PostgREST
+-- exposure gap) but reads must stay open to everyone, or every screen that
+-- shows an exercise name breaks. No write policy on purpose: seeding
+-- (packages/db/scripts/seed-exercises.ts, seed-presets.ts) runs as the
+-- table-owning role, which bypasses RLS entirely — `rebound_app` was never
+-- meant to write these tables, and the absence of an INSERT/UPDATE/DELETE
+-- policy keeps that true even with RLS on.
+ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS exercises_public_read ON exercises;
+CREATE POLICY exercises_public_read ON exercises FOR SELECT USING (true);
+
+ALTER TABLE presets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS presets_public_read ON presets;
+CREATE POLICY presets_public_read ON presets FOR SELECT USING (true);
+
+ALTER TABLE preset_exercises ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS preset_exercises_public_read ON preset_exercises;
+CREATE POLICY preset_exercises_public_read ON preset_exercises FOR SELECT USING (true);
+
+-- llm_calls / test_fixtures / test_runs / scenarios: internal admin-only
+-- data (packages/api/src/routers/admin-experiments.ts's `adminOnlyProcedure`
+-- deliberately uses the privileged `prisma` client, not `prismaRls` — see
+-- that router's own comment for why). `rebound_app` never legitimately
+-- touches these tables at all, so RLS is enabled with zero policies —
+-- full default-deny for any non-owner role, which is exactly what should
+-- happen here. The table-owning role (packages/agents, cron routes, and
+-- admin-experiments's own queries) is unaffected, same as every other
+-- table in this file.
+ALTER TABLE llm_calls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE test_fixtures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE test_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scenarios ENABLE ROW LEVEL SECURITY;

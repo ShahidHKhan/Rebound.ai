@@ -1,4 +1,5 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -9,6 +10,12 @@ import { Button } from "../../../components/Button";
 import { ChipGroup } from "../../../components/ChipGroup";
 import { trpc } from "../../../lib/trpc";
 import { useSharedStyles } from "../../../lib/styles";
+
+// Notification permission primer: shown once, before the OS permission
+// dialog fires naturally on Home's first mount (see lib/notifications.ts's
+// syncDailyNotifications, called from HomeScreen). Same expo-secure-store
+// persistence pattern as lib/accessibility.tsx's `largeText` preference.
+const NOTIFICATION_PRIMER_SEEN_KEY = "rebound.notificationPrimerSeen";
 
 type RegimeData = inferRouterOutputs<AppRouter>["regime"]["getById"];
 type SessionSlot = "MORNING" | "EVENING";
@@ -61,6 +68,7 @@ export default function RegimeReviewScreen() {
   const [exercises, setExercises] = useState<EditableExercise[] | null>(null);
   const [activated, setActivated] = useState<{ exerciseCount: number } | null>(null);
   const [seededFrom, setSeededFrom] = useState<typeof regimeQuery.data>(undefined);
+  const [showNotificationPrimer, setShowNotificationPrimer] = useState(false);
 
   if (regimeQuery.data && regimeQuery.data !== seededFrom) {
     setSeededFrom(regimeQuery.data);
@@ -85,7 +93,47 @@ export default function RegimeReviewScreen() {
     activate.mutate({ regimeId, exercises: changed ? current : undefined });
   }
 
+  // Only the very first regime a user ever activates should interrupt with
+  // the primer — gated on versionNumber === 1 AND the "seen" flag being
+  // unset, so later regime activations (Flow B adjustments, restarts) go
+  // straight to Home like today. Purely explanatory framing; the actual OS
+  // permission dialog still fires naturally on Home's next mount via
+  // syncDailyNotifications, untouched here.
+  async function handleGoToSessions() {
+    const isFirstRegime = regimeQuery.data?.versionNumber === 1;
+    if (isFirstRegime) {
+      const alreadySeen = await SecureStore.getItemAsync(NOTIFICATION_PRIMER_SEEN_KEY);
+      if (alreadySeen !== "true") {
+        setShowNotificationPrimer(true);
+        return;
+      }
+    }
+    router.replace("/");
+  }
+
+  function handlePrimerContinue() {
+    SecureStore.setItemAsync(NOTIFICATION_PRIMER_SEEN_KEY, "true").catch(() => {});
+    router.replace("/");
+  }
+
   if (activated) {
+    if (showNotificationPrimer) {
+      return (
+        <View style={shared.centeredPage}>
+          <Text style={shared.title}>Two daily reminders</Text>
+          <Text>
+            To help the habit stick, Rebound.ai sends two reminders a day — one around your wake time, one in
+            the evening — nudging you toward your morning and evening sessions.
+          </Text>
+          <Text>
+            Next you&apos;ll see a system prompt asking to allow notifications — allow it so reminders can reach
+            you. You can turn this off anytime from Settings.
+          </Text>
+          <Button label="Continue" onPress={handlePrimerContinue} />
+        </View>
+      );
+    }
+
     return (
       <View style={shared.centeredPage}>
         <Text style={shared.title}>Regime activated</Text>
@@ -94,7 +142,7 @@ export default function RegimeReviewScreen() {
             ✓ {activated.exerciseCount} exercises are now live, split across morning and evening sessions.
           </Text>
         </View>
-        <Button label="Go to today's sessions →" onPress={() => router.replace("/")} />
+        <Button label="Go to today's sessions →" onPress={handleGoToSessions} />
       </View>
     );
   }
@@ -124,6 +172,7 @@ export default function RegimeReviewScreen() {
 
   return (
     <ScrollView contentContainerStyle={shared.page}>
+      <Button label="← Back" variant="secondary" onPress={() => router.back()} />
       <Text style={shared.title}>Review your regime</Text>
       <Text>Adjust sets, reps, duration, or which session an exercise falls in, then activate.</Text>
 
@@ -137,7 +186,10 @@ export default function RegimeReviewScreen() {
           {group.map((exercise) => (
             <View key={exercise.exerciseId} style={shared.card}>
               <Text style={{ fontWeight: "700" }}>
-                {exercise.name} ({exercise.category.toLowerCase()})
+                <Link href={`/exercise/${exercise.exerciseId}`} style={shared.link}>
+                  {exercise.name}
+                </Link>{" "}
+                ({exercise.category.toLowerCase()})
               </Text>
 
               <Text style={shared.label}>Sets</Text>

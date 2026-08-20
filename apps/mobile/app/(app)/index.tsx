@@ -71,7 +71,10 @@ function SessionCard({
       <Text style={shared.subtitle}>{label}</Text>
       {exercises.map((e) => (
         <Text key={e.exerciseId}>
-          • {e.exercise.name}
+          {"• "}
+          <Link href={`/exercise/${e.exerciseId}`} style={shared.link}>
+            {e.exercise.name}
+          </Link>
           {e.sets && e.reps ? ` — ${e.sets}×${e.reps}` : ""}
           {e.durationSeconds ? ` — ${e.durationSeconds}s` : ""}
         </Text>
@@ -87,6 +90,40 @@ function SessionCard({
           onPress={() => session && onComplete(session.id)}
         />
       )}
+    </View>
+  );
+}
+
+const TRIGGER_LABEL: Record<string, string> = {
+  SCHEDULED_ADJUSTMENT: "Scheduled adjustment",
+  ESCALATION_ROLLBACK: "Escalation rollback",
+};
+
+// Promotes the hold/rollback banner (transient, shown only right after a
+// sessionLog.create call above) into a revisitable "what changed and why"
+// moment — surfaced whenever the active regime isn't the original version.
+function AdjustmentExplainer({ regimeId, versionNumber }: { regimeId: string; versionNumber: number }) {
+  const shared = useSharedStyles();
+  const eventsQuery = trpc.adjustmentEvent.list.useQuery();
+
+  if (versionNumber <= 1) return null;
+  if (!eventsQuery.data) return null;
+
+  const latestEvent = eventsQuery.data.find((e) => e.toRegimeVersionId === regimeId);
+  if (!latestEvent) return null;
+
+  return (
+    <View style={shared.card}>
+      <Text style={shared.subtitle}>Your plan changed</Text>
+      <Text>
+        v{latestEvent.fromRegime.versionNumber} → v{latestEvent.toRegime.versionNumber} —{" "}
+        {TRIGGER_LABEL[latestEvent.triggerType] ?? latestEvent.triggerType}
+      </Text>
+      <Text style={{ color: "#666", fontSize: 12 }}>{new Date(latestEvent.triggeredAt).toLocaleString()}</Text>
+      <Text>{latestEvent.rationale}</Text>
+      <Link href="/adjustments" style={shared.link}>
+        See full history →
+      </Link>
     </View>
   );
 }
@@ -169,6 +206,8 @@ export default function HomeScreen() {
       <Text style={{ color: "#666" }}>Regime v{data.regime.versionNumber}</Text>
       <Text>{data.streak > 0 ? `${data.streak}-day streak` : "No streak yet — complete a session to start one"}</Text>
 
+      <AdjustmentExplainer regimeId={data.regime.id} versionNumber={data.regime.versionNumber} />
+
       <SessionCard
         slot="MORNING"
         label="Morning"
@@ -248,6 +287,12 @@ export default function HomeScreen() {
         )}
       </View>
 
+      <Link href="/history" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
+        History
+      </Link>
+      <Link href="/progress" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
+        Progress
+      </Link>
       <Link href="/settings" style={[shared.secondaryButton, shared.secondaryButtonText, { textAlign: "center" }]}>
         Settings
       </Link>
