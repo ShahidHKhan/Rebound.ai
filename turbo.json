@@ -29,7 +29,8 @@
       "dependsOn": ["^build"]
     },
     "generate": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^generate"]
     }
   }
 }

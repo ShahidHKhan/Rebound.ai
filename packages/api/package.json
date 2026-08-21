@@ -18,6 +18,7 @@
     "@clerk/backend": "^3.16.5",
     "@rebound/agents": "workspace:*",
     "@rebound/clinical-rules": "workspace:*",
+    "@rebound/contracts": "workspace:*",
     "@rebound/db": "workspace:*",
     "@trpc/server": "^11.0.0",
     "next": "16.3.0",

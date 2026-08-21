@@ -7,19 +7,22 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate": "openapi-typescript ../../packages/contracts/openapi.json -o src/lib/rest/schema.d.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.14.0",
     "@rebound/agents": "workspace:*",
     "@rebound/api": "workspace:*",
     "@rebound/clinical-rules": "workspace:*",
+    "@rebound/contracts": "workspace:*",
     "@rebound/db": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
     "@trpc/server": "^11.0.0",
     "next": "16.3.0",
+    "openapi-fetch": "^0.13.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "superjson": "^2.2.1",
@@ -32,6 +35,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "openapi-typescript": "^7.4.0",
     "typescript": "^5"
   }
 }
