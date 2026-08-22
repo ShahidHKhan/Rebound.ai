@@ -48,7 +48,7 @@
 
 **A real UI/UX design pass** — deliberately deferred until the core loop + billing exist. Billing exists only as a non-functioning preview, so the trigger condition for this is arguably still not fully met — worth a deliberate call on whether "preview is enough" or this waits for real Stripe. See `DESIGN_BRIEF.md` for the full framing once this starts.
 
-**Billing / Stripe** — no account or keys exist yet. The product-logic trigger point (paywall at first real adjustment) is already correctly implemented and waiting; this is purely "connect a real payment processor," not a design or logic gap.
+**Billing / Stripe** — no account or keys exist yet. The product-logic trigger point (paywall at first real adjustment, plus the Flow B cron gate that skips a locked-out user's second-and-later adjustments on `User.subscriptionActive`) is already correctly implemented and waiting; this is purely "connect a real payment processor and flip `subscriptionActive` from a webhook," not a design or logic gap.
 
 **Old Supabase project decommissioning** — the pre-migration Supabase project still exists, untouched, fate undecided.
 

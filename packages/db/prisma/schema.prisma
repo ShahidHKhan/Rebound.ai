@@ -167,6 +167,11 @@ model User {
   manualHold       Boolean @default(false)
   manualHoldReason String?
 
+  // Placeholder until real Stripe integration exists (see TDD.md's billing
+  // note). Never flips true today — the Flow B cron gate reads this to decide
+  // whether a post-trial user's regime is allowed to advance.
+  subscriptionActive Boolean @default(false)
+
   regimes               Regime[]
   workoutSessions       WorkoutSession[]
   sessionLogs           SessionLog[]

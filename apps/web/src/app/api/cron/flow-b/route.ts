@@ -14,7 +14,11 @@ export async function GET(request: Request) {
 
   const activeRegimes = await prisma.regime.findMany({
     where: { status: "ACTIVE", user: { manualHold: false } },
-    select: { userId: true, createdAt: true },
+    select: {
+      userId: true,
+      createdAt: true,
+      user: { select: { subscriptionActive: true } },
+    },
   });
 
   const results: Array<{ userId: string; status: string; error?: string }> = [];
@@ -27,6 +31,18 @@ export async function GET(request: Request) {
 
     const anchor = lastEvent?.triggeredAt ?? regime.createdAt;
     if (anchor > sevenDaysAgo) continue;
+
+    if (!regime.user.subscriptionActive) {
+      const trialAdjustmentUsed = await prisma.adjustmentEvent.findFirst({
+        where: { userId: regime.userId, triggerType: "SCHEDULED_ADJUSTMENT" },
+        select: { id: true },
+      });
+
+      if (trialAdjustmentUsed) {
+        results.push({ userId: regime.userId, status: "skipped_trial_locked" });
+        continue;
+      }
+    }
 
     try {
       const result = await runFlowBForUser(regime.userId);

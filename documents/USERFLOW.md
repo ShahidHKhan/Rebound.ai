@@ -108,10 +108,13 @@ flowchart TD
     A[Free trial: full product access] --> B{First SCHEDULED_ADJUSTMENT\nAdjustment Event exists?}
     B -->|No| A
     B -->|Yes, real trigger per PRD spec| C["Paywall card appears\ninside /settings/billing — never a blocking interstitial"]
-    C --> D[Cancellation flow: reason code + downgrade-to-presets confirmation]
+    C --> D{subscriptionActive?}
+    D -->|No| E["Flow B cron skips this user's next\n7-day cycle (status: skipped_trial_locked)\nregime holds at its post-week-1 version"]
+    D -->|Yes| F[Next cron cycle generates the\nadjustment the user was owed]
+    C --> G[Cancellation flow: reason code + downgrade-to-presets confirmation]
 ```
 
-`user.getMe`'s trial-status computation is real logic (checks for a `SCHEDULED_ADJUSTMENT`-type event, deliberately excluding `ESCALATION_ROLLBACK` — a safety rollback isn't the product completing a normal cycle). No Stripe integration exists behind it yet — see `ENG_PLAN.md`.
+`user.getMe`'s trial-status computation is real logic (checks for a `SCHEDULED_ADJUSTMENT`-type event, deliberately excluding `ESCALATION_ROLLBACK` — a safety rollback isn't the product completing a normal cycle). The enforcement itself lives one level down, in the Flow B cron: it checks `User.subscriptionActive` (placeholder field, always `false` until real billing exists) before generating a user's *second* scheduled adjustment, and skips the LLM call entirely if the trial adjustment was already used and the user hasn't converted — so no inference spend goes toward a regime update a non-paying user won't see. No Stripe integration exists behind `subscriptionActive` yet — see `ENG_PLAN.md`.
 
 ## 7. Admin Flows
 

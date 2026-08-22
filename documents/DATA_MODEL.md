@@ -172,7 +172,7 @@ Audit trail for the agent; also backs the reversal-rate guardrail metric.
 | `fromRegimeVersionId`, `toRegimeVersionId` | String (FK → Regime, both) | |
 | `triggeredAt` | DateTime | |
 | `triggerType` | enum `TriggerType` | `SCHEDULED_ADJUSTMENT` \| `ESCALATION_ROLLBACK` |
-| `trailingWindowUsed` | Int | Days of Session Log history used — confirms only 1–2 weeks used |
+| `trailingWindowUsed` | Int | Days of Session Log history used — confirms the fixed 7-day window was used |
 | `rationale` | String | Agent's stated reason, stored even if not user-facing; also carries system-level causes (e.g. "held due to API outage") |
 | `wasReversed` | Boolean | Set retroactively — the reversal-rate guardrail metric as a first-class field. An event counts as reversed once a later rollback lands the active regime back at its *starting* version or earlier |
 

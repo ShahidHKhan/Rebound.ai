@@ -46,7 +46,7 @@ The app is marketed primarily to athletes (see Intended Audience), but its user 
 
 ### Decision — Pure AI automation, chosen for v1
 
-No clinician in the loop for any tier in v1 (this is the differentiation). Weekly loop: evaluate the trailing 1–2 weeks of self-reported trajectory → hold/progress if improving → adjust/rollback if not → repeat until pain-free or user ends. Because there's no clinician safety backstop, the guardrails below are non-optional. Any clinician-reviewed tier is a deliberate future decision.
+No clinician in the loop for any tier in v1 (this is the differentiation). Weekly loop: evaluate the trailing 7 days of self-reported trajectory → hold/progress if improving → adjust/rollback if not → repeat until pain-free or user ends. Because there's no clinician safety backstop, the guardrails below are non-optional. Any clinician-reviewed tier is a deliberate future decision.
 
 ### Concrete onboarding safety requirements (v1, non-negotiable)
 
@@ -59,7 +59,7 @@ No clinician in the loop for any tier in v1 (this is the differentiation). Weekl
 
 Initial-regime generation is **hybrid** — not a pure LLM prompt, and not a pure rules-based mapping. Rules decide *who is eligible for what intensity*; the LLM decides *which specific exercises, and which session slot, within those bounds*; rules validate the output before a user ever sees it. This split is what makes the Pre-launch validation section below testable — the rules layer can be unit-tested deterministically, and PT review only needs to focus on the LLM's judgment within already-safe bounds. For the concrete current implementation (skeleton-preset retrieval, tool-use mechanics, model choice), see `TDD.md`.
 
-There are two distinct flows, which should not be conflated in implementation: **initial generation** (onboarding, no logged history yet) and **recursive adjustment** (weekly/biweekly, uses trailing Session Log data). A third component, the **escalation monitor**, runs independently of both on a real-time basis.
+There are two distinct flows, which should not be conflated in implementation: **initial generation** (onboarding, no logged history yet) and **recursive adjustment** (fixed 7-day cycle, uses trailing Session Log data). A third component, the **escalation monitor**, runs independently of both on a real-time basis.
 
 **Flow A — Initial regime generation**
 
@@ -71,9 +71,9 @@ There are two distinct flows, which should not be conflated in implementation: *
 6. **User reviews/edits** before activating.
 7. **Regime v1 activated** — Session Log and Workout Session tracking begins from this point.
 
-**Flow B — Recursive adjustment (weekly/biweekly)**
+**Flow B — Recursive adjustment (fixed 7-day cycle)**
 
-1. **Trailing 1–2 week Session Logs** pulled (pain, mobility/strength indicator, flags) — per the existing non-negotiable to avoid conflating older signal with current trajectory. Window anchor is the later of the regularly scheduled date or the most recent escalation rollback (see Post-rollback cadence below), so this never spans an incident.
+1. **Trailing 7-day Session Logs** pulled (pain, mobility/strength indicator, flags) — per the existing non-negotiable to avoid conflating older signal with current trajectory. Window anchor is the later of the regularly scheduled date or the most recent escalation rollback (see Post-rollback cadence below), so this never spans an incident.
 2. **LLM proposes adjustment** (hold, progress, or rollback, including any re-slotting between morning/evening), using the current regime and exercise library as tools.
 3. **Rules-based validator** — `validateRegime(draft, riskTier, previousRegime)`. With `previousRegime` present, both absolute bounds and the week-over-week delta check run. Too aggressive → clip to ceiling or hold at current regime. Within bounds → continue.
 4. **New regime version created; Adjustment Event logged** with `trigger_type: scheduled_adjustment` (rationale, trailing window used). Repeats next cycle.
@@ -163,7 +163,7 @@ Open now: TOS + medical disclaimers (digital-health counsel), liability insuranc
 - Stat logging: User logs pain/mobility/strength stats **once daily**, bundled with the morning session.
 - Streak/accountability system: Duolingo-style streak mechanic — a day counts toward the streak if **at least one of the day's two sessions** is completed.
 - Notification system: Two notifications per day, fixed — a morning (wake) notification bundling stat log + session 1, and an evening notification for session 2.
-- Recursive adjustment agent: A mini-LLM/agent reviews the user's pain/movement stats and trajectory on a recurring (weekly or biweekly) basis and adjusts the regime accordingly, using only the trailing 1–2 weeks of data. A separate real-time escalation monitor watches every Session Log write for pain spikes or "made it worse" flags. Both paths validate any regime change through the same shared `validateRegime` function.
+- Recursive adjustment agent: A mini-LLM/agent reviews the user's pain/movement stats and trajectory on a fixed 7-day cycle and adjusts the regime accordingly, using the trailing 7 days of data. A separate real-time escalation monitor watches every Session Log write for pain spikes or "made it worse" flags. Both paths validate any regime change through the same shared `validateRegime` function.
 - General presets: Preset regimes for common use cases, independent of a user's personalized recovery regime. Also serve as the fallback destination when Flow A fails to produce a valid regime.
 - Accessibility baseline: given elderly users are an explicit target audience, v1 includes font scaling and larger tap targets at minimum.
 - Exercise data & demo visuals: v1 exercise data is sourced from Free Exercise DB (public domain, text only). For the pre-funding investor demo specifically, exercise GIFs are pulled from AscendAPI's free hosted tier — treated as fully disposable for demo purposes only.
@@ -253,7 +253,7 @@ See [`DATA_MODEL.md`](./DATA_MODEL.md) for the authoritative, implementation-acc
 
 **Model:** Subscription, not one-time purchase. The core value (an ongoing, adapting regime) and the core cost (LLM inference on every adjustment cycle) are both recurring — a one-time payment would mean absorbing inference costs indefinitely after a single purchase.
 
-**Trial mechanics:** Free access through onboarding, the questionnaire, the AI-generated first regime, and all supporting features (streaks, notifications, presets). The paywall triggers at the first recursive regime adjustment (typically ~1 week in) — the user experiences the full product once before being asked to pay to continue.
+**Trial mechanics:** Free access through onboarding, the questionnaire, the AI-generated first regime, and all supporting features (streaks, notifications, presets), plus the user's first recursive regime adjustment (~1 week in) — the user experiences one full adjustment cycle before being asked to pay. The gate isn't a blocking screen the user hits; it's the *second* scheduled adjustment (~2 weeks in) never firing. Flow B's cron checks `subscriptionActive` before generating that adjustment and skips users who haven't converted, so no LLM spend goes toward a regime update a non-paying user won't see — the regime simply holds at its post-week-1 version until they pay, at which point the next cron cycle generates the adjustment they were owed. The paywall card in `/settings/billing` (non-blocking) is what surfaces this to the user in the meantime.
 
 **Pricing:** TBD. Reference points from comparable players: flat low-monthly, insurance-independent tiers around $14.99/mo exist in this market; outcome-based pricing is also precedented but adds complexity Rebound.ai likely doesn't want at v1 given the pure-AI, no-clinician-review cost structure.
 
