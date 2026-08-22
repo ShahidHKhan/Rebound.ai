@@ -17,6 +17,18 @@ import { ApiError } from "../errors";
 
 type Ctx = { prisma: Prisma.TransactionClient; userId: string };
 
+// Shared with handlers/workout-session.ts's `today` — both queries include
+// { exerciseList: { include: { exercise: true } } } and need the exact same
+// media narrowing (see handlers/exercise.ts's getExerciseById).
+export function toRegimeExerciseListResponse(
+  exerciseList: Prisma.RegimeExerciseGetPayload<{ include: { exercise: true } }>[]
+) {
+  return exerciseList.map((e) => ({
+    ...e,
+    exercise: { ...e.exercise, media: e.exercise.media as ExerciseMedia },
+  }));
+}
+
 function toRegimeResponse(
   regime: Prisma.RegimeGetPayload<{
     include: {
@@ -48,15 +60,7 @@ function toRegimeResponse(
         }
       : null,
     parentRegimeId: regime.parentRegimeId,
-    exerciseList: regime.exerciseList.map((e) => ({
-      ...e,
-      exercise: {
-        ...e.exercise,
-        // Same narrowing as handlers/exercise.ts's getExerciseById — Prisma's
-        // Json? column type-checks broader than the real shape stored here.
-        media: e.exercise.media as ExerciseMedia,
-      },
-    })),
+    exerciseList: toRegimeExerciseListResponse(regime.exerciseList),
   };
 }
 

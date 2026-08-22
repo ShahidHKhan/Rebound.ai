@@ -1,14 +1,15 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
+import type { components } from "@/lib/rest/schema";
 
-import { trpc } from "@/lib/trpc/client";
-
-type TodayData = inferRouterOutputs<AppRouter>["workoutSession"]["today"];
+type TodayData = components["schemas"]["WorkoutSessionToday"];
 type SessionSlot = "MORNING" | "EVENING";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
@@ -55,7 +56,7 @@ function SessionCard({
         ))}
       </ul>
       {session?.completedAt ? (
-        <p>Completed at {session.completedAt.toLocaleTimeString()}</p>
+        <p>Completed at {new Date(session.completedAt).toLocaleTimeString()}</p>
       ) : (
         <>
           <button type="button" disabled={completing || !session} onClick={() => session && onComplete(session.id)}>
@@ -87,7 +88,10 @@ const TRIGGER_LABEL: Record<string, string> = {
 // sessionLog.create call above) into a revisitable "what changed and why"
 // moment — surfaced whenever the active regime isn't the original version.
 function AdjustmentExplainer({ regimeId, versionNumber }: { regimeId: string; versionNumber: number }) {
-  const eventsQuery = trpc.adjustmentEvent.list.useQuery();
+  const eventsQuery = useQuery({
+    queryKey: qk.adjustmentEvents(),
+    queryFn: async () => unwrap(await api.GET("/adjustment-events")),
+  });
 
   if (versionNumber <= 1) return null;
   if (!eventsQuery.data) return null;
@@ -116,11 +120,16 @@ function AdjustmentExplainer({ regimeId, versionNumber }: { regimeId: string; ve
 }
 
 export default function Home() {
-  const utils = trpc.useUtils();
-  const today = trpc.workoutSession.today.useQuery();
+  const queryClient = useQueryClient();
+  const today = useQuery({
+    queryKey: qk.workoutSessionsToday(),
+    queryFn: async () => unwrap(await api.GET("/workout-sessions/today")),
+  });
 
-  const completeSession = trpc.workoutSession.complete.useMutation({
-    onSuccess: () => utils.workoutSession.today.invalidate(),
+  const completeSession = useMutation({
+    mutationFn: async (workoutSessionId: string) =>
+      unwrap(await api.POST("/workout-sessions/{id}/complete", { params: { path: { id: workoutSessionId } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.workoutSessionsToday() }),
   });
 
   const [painScore, setPainScore] = useState(0);
@@ -128,10 +137,12 @@ export default function Home() {
   const [perceivedExertion, setPerceivedExertion] = useState("");
   const [logResult, setLogResult] = useState<{ action: string; reasons: string[] } | null>(null);
 
-  const logSession = trpc.sessionLog.create.useMutation({
+  const logSession = useMutation({
+    mutationFn: async (input: { painScore: number; flag: boolean; perceivedExertion?: number }) =>
+      unwrap(await api.POST("/session-logs", { body: input })),
     onSuccess: (result) => {
       setLogResult({ action: result.escalation.action, reasons: result.escalation.reasons });
-      utils.workoutSession.today.invalidate();
+      queryClient.invalidateQueries({ queryKey: qk.workoutSessionsToday() });
     },
   });
 
@@ -170,6 +181,12 @@ export default function Home() {
   }
 
   const data = today.data;
+  // Redundant with the guard above (already returned if !today.data.regime)
+  // — re-established here because TS's narrowing doesn't survive the
+  // `const data = today.data` aliasing for this generated nested type. Not a
+  // logic change, just closing a real narrowing gap the openapi-fetch
+  // response type introduced that tRPC's inferred type never had.
+  if (!data.regime) return null;
 
   return (
     <main style={pageStyle}>
@@ -185,7 +202,7 @@ export default function Home() {
         data={data}
         completing={completeSession.isPending}
         completeError={completeSession.isError ? completeSession.error.message : null}
-        onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
+        onComplete={(id) => completeSession.mutate(id)}
       />
       <SessionCard
         slot="EVENING"
@@ -193,7 +210,7 @@ export default function Home() {
         data={data}
         completing={completeSession.isPending}
         completeError={completeSession.isError ? completeSession.error.message : null}
-        onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
+        onComplete={(id) => completeSession.mutate(id)}
       />
 
       <div style={cardStyle}>

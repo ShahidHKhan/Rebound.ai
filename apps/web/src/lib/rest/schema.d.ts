@@ -630,6 +630,380 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/session-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the current user's session logs, most recent first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SessionLogs"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Log today's pain/exertion check-in — runs the real-time escalation monitor inline */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        painScore: number;
+                        /** @default false */
+                        flag?: boolean;
+                        perceivedExertion?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Logged */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateSessionLogResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No active regime to log against */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Already logged today */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workout-sessions/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everything the Today screen needs: active regime, today's sessions, today's log, current streak */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WorkoutSessionToday"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workout-sessions/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a workout session complete */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Completed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CompleteWorkoutSessionResponse"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Session belongs to another user */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No workout session with this id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/progress/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pain trend, adherence %, weeks active, current streak */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProgressSummary"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/progress/streak-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Last 60 days, each flagged whether >=1 session was completed */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StreakCalendar"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/progress/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Derived achievement list — nothing persisted */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Milestones"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/adjustment-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The current user's adjustment events, most recent first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdjustmentEvents"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -795,6 +1169,120 @@ export interface components {
             /** @enum {boolean} */
             success: true;
         };
+        SessionLog: {
+            id: string;
+            userId: string;
+            regimeVersionId: string;
+            /** Format: date-time */
+            loggedAt: string;
+            painScore: number;
+            mobilityStrengthIndicator?: unknown;
+            completed: boolean;
+            perceivedExertion: number | null;
+            flag: boolean;
+        };
+        SessionLogs: components["schemas"]["SessionLog"][];
+        CreateSessionLogResponse: {
+            sessionLogId: string;
+            escalation: {
+                /** @enum {string} */
+                action: "none" | "hold" | "flag_for_review" | "rollback";
+                reasons: string[];
+            };
+        };
+        WorkoutSession: {
+            id: string;
+            userId: string;
+            regimeVersionId: string;
+            /** Format: date-time */
+            date: string;
+            /** @enum {string} */
+            slot: "MORNING" | "EVENING";
+            /** Format: date-time */
+            scheduledAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
+        };
+        WorkoutSessionToday: {
+            regime: {
+                id: string;
+                userId: string;
+                versionNumber: number;
+                /** Format: date-time */
+                createdAt: string;
+                /** @enum {string} */
+                createdBy: "AGENT" | "USER_EDITED" | "PRESET_FALLBACK";
+                /** @enum {string} */
+                status: "DRAFT" | "ACTIVE" | "SUPERSEDED" | "ENDED";
+                endReason: string | null;
+                sourcePresetId: string | null;
+                parentRegimeId: string | null;
+                exerciseList: {
+                    id: string;
+                    regimeId: string;
+                    exerciseId: string;
+                    sets: number | null;
+                    reps: number | null;
+                    durationSeconds: number | null;
+                    frequency: string | null;
+                    /** @enum {string} */
+                    sessionSlot: "MORNING" | "EVENING";
+                    orderIndex: number;
+                    exercise: components["schemas"]["Exercise"];
+                }[];
+            } | null;
+            sessions: components["schemas"]["WorkoutSession"][];
+            todaysLog: components["schemas"]["SessionLog"] & unknown;
+            streak: number;
+        };
+        CompleteWorkoutSessionResponse: {
+            workoutSessionId: string;
+            /** Format: date-time */
+            completedAt: string | null;
+        };
+        ProgressSummary: {
+            painTrend: {
+                date: string;
+                painScore: number;
+            }[];
+            adherencePct: number | null;
+            completedSessions: number;
+            totalSessions: number;
+            weeksActive: number;
+            streak: number;
+        };
+        StreakCalendar: {
+            days: {
+                date: string;
+                completed: boolean;
+            }[];
+            streak: number;
+        };
+        Milestones: {
+            id: string;
+            label: string;
+            description: string;
+        }[];
+        AdjustmentEvent: {
+            id: string;
+            userId: string;
+            fromRegimeVersionId: string;
+            toRegimeVersionId: string;
+            /** Format: date-time */
+            triggeredAt: string;
+            /** @enum {string} */
+            triggerType: "SCHEDULED_ADJUSTMENT" | "ESCALATION_ROLLBACK";
+            trailingWindowUsed: number;
+            rationale: string;
+            wasReversed: boolean;
+            fromRegime: {
+                versionNumber: number;
+            };
+            toRegime: {
+                versionNumber: number;
+            };
+        };
+        AdjustmentEvents: components["schemas"]["AdjustmentEvent"][];
     };
     responses: never;
     parameters: never;

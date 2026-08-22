@@ -632,6 +632,477 @@
         "required": [
           "success"
         ]
+      },
+      "SessionLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "regimeVersionId": {
+            "type": "string"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "painScore": {
+            "type": "integer"
+          },
+          "mobilityStrengthIndicator": {
+            "nullable": true
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "perceivedExertion": {
+            "type": "integer",
+            "nullable": true
+          },
+          "flag": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "regimeVersionId",
+          "loggedAt",
+          "painScore",
+          "completed",
+          "perceivedExertion",
+          "flag"
+        ]
+      },
+      "SessionLogs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SessionLog"
+        }
+      },
+      "CreateSessionLogResponse": {
+        "type": "object",
+        "properties": {
+          "sessionLogId": {
+            "type": "string"
+          },
+          "escalation": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "hold",
+                  "flag_for_review",
+                  "rollback"
+                ]
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "action",
+              "reasons"
+            ]
+          }
+        },
+        "required": [
+          "sessionLogId",
+          "escalation"
+        ]
+      },
+      "WorkoutSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "regimeVersionId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slot": {
+            "type": "string",
+            "enum": [
+              "MORNING",
+              "EVENING"
+            ]
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "regimeVersionId",
+          "date",
+          "slot",
+          "scheduledAt",
+          "completedAt"
+        ]
+      },
+      "WorkoutSessionToday": {
+        "type": "object",
+        "properties": {
+          "regime": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "string"
+              },
+              "versionNumber": {
+                "type": "integer"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "createdBy": {
+                "type": "string",
+                "enum": [
+                  "AGENT",
+                  "USER_EDITED",
+                  "PRESET_FALLBACK"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "DRAFT",
+                  "ACTIVE",
+                  "SUPERSEDED",
+                  "ENDED"
+                ]
+              },
+              "endReason": {
+                "type": "string",
+                "nullable": true
+              },
+              "sourcePresetId": {
+                "type": "string",
+                "nullable": true
+              },
+              "parentRegimeId": {
+                "type": "string",
+                "nullable": true
+              },
+              "exerciseList": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "regimeId": {
+                      "type": "string"
+                    },
+                    "exerciseId": {
+                      "type": "string"
+                    },
+                    "sets": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "reps": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "durationSeconds": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "sessionSlot": {
+                      "type": "string",
+                      "enum": [
+                        "MORNING",
+                        "EVENING"
+                      ]
+                    },
+                    "orderIndex": {
+                      "type": "integer"
+                    },
+                    "exercise": {
+                      "$ref": "#/components/schemas/Exercise"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "regimeId",
+                    "exerciseId",
+                    "sets",
+                    "reps",
+                    "durationSeconds",
+                    "frequency",
+                    "sessionSlot",
+                    "orderIndex",
+                    "exercise"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "userId",
+              "versionNumber",
+              "createdAt",
+              "createdBy",
+              "status",
+              "endReason",
+              "sourcePresetId",
+              "parentRegimeId",
+              "exerciseList"
+            ]
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkoutSession"
+            }
+          },
+          "todaysLog": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionLog"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "streak": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "regime",
+          "sessions",
+          "todaysLog",
+          "streak"
+        ]
+      },
+      "CompleteWorkoutSessionResponse": {
+        "type": "object",
+        "properties": {
+          "workoutSessionId": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "workoutSessionId",
+          "completedAt"
+        ]
+      },
+      "ProgressSummary": {
+        "type": "object",
+        "properties": {
+          "painTrend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "painScore": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "painScore"
+              ]
+            }
+          },
+          "adherencePct": {
+            "type": "integer",
+            "nullable": true
+          },
+          "completedSessions": {
+            "type": "integer"
+          },
+          "totalSessions": {
+            "type": "integer"
+          },
+          "weeksActive": {
+            "type": "integer"
+          },
+          "streak": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "painTrend",
+          "adherencePct",
+          "completedSessions",
+          "totalSessions",
+          "weeksActive",
+          "streak"
+        ]
+      },
+      "StreakCalendar": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "date",
+                "completed"
+              ]
+            }
+          },
+          "streak": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "streak"
+        ]
+      },
+      "Milestones": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "description"
+          ]
+        }
+      },
+      "AdjustmentEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "fromRegimeVersionId": {
+            "type": "string"
+          },
+          "toRegimeVersionId": {
+            "type": "string"
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED_ADJUSTMENT",
+              "ESCALATION_ROLLBACK"
+            ]
+          },
+          "trailingWindowUsed": {
+            "type": "integer"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "wasReversed": {
+            "type": "boolean"
+          },
+          "fromRegime": {
+            "type": "object",
+            "properties": {
+              "versionNumber": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "versionNumber"
+            ]
+          },
+          "toRegime": {
+            "type": "object",
+            "properties": {
+              "versionNumber": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "versionNumber"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "fromRegimeVersionId",
+          "toRegimeVersionId",
+          "triggeredAt",
+          "triggerType",
+          "trailingWindowUsed",
+          "rationale",
+          "wasReversed",
+          "fromRegime",
+          "toRegime"
+        ]
+      },
+      "AdjustmentEvents": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AdjustmentEvent"
+        }
       }
     },
     "parameters": {}
@@ -1313,6 +1784,281 @@
           },
           "400": {
             "description": "No active regime to restart"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/session-logs": {
+      "get": {
+        "tags": [
+          "session-log"
+        ],
+        "summary": "List the current user's session logs, most recent first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionLogs"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "session-log"
+        ],
+        "summary": "Log today's pain/exertion check-in — runs the real-time escalation monitor inline",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "painScore": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "flag": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "perceivedExertion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "painScore"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSessionLogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active regime to log against"
+          },
+          "409": {
+            "description": "Already logged today"
+          }
+        }
+      }
+    },
+    "/workout-sessions/today": {
+      "get": {
+        "tags": [
+          "workout-session"
+        ],
+        "summary": "Everything the Today screen needs: active regime, today's sessions, today's log, current streak",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutSessionToday"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/workout-sessions/{id}/complete": {
+      "post": {
+        "tags": [
+          "workout-session"
+        ],
+        "summary": "Mark a workout session complete",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteWorkoutSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Session belongs to another user"
+          },
+          "404": {
+            "description": "No workout session with this id"
+          }
+        }
+      }
+    },
+    "/progress/summary": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Pain trend, adherence %, weeks active, current streak",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/progress/streak-calendar": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Last 60 days, each flagged whether >=1 session was completed",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreakCalendar"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/progress/milestones": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Derived achievement list — nothing persisted",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Milestones"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/adjustment-events": {
+      "get": {
+        "tags": [
+          "adjustment-event"
+        ],
+        "summary": "The current user's adjustment events, most recent first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentEvents"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"

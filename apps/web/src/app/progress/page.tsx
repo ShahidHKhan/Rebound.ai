@@ -1,14 +1,15 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
+import type { components } from "@/lib/rest/schema";
 
-import { trpc } from "@/lib/trpc/client";
-
-type Summary = inferRouterOutputs<AppRouter>["progress"]["summary"];
+type Summary = components["schemas"]["ProgressSummary"];
 type PainPoint = Summary["painTrend"][number];
 
 const pageStyle: React.CSSProperties = { maxWidth: 720, margin: "0 auto", padding: "2rem" };
@@ -173,7 +174,10 @@ function PainTrendChart({ painTrend }: { painTrend: PainPoint[] }) {
 }
 
 export default function ProgressPage() {
-  const summary = trpc.progress.summary.useQuery();
+  const summary = useQuery({
+    queryKey: qk.progressSummary(),
+    queryFn: async () => unwrap(await api.GET("/progress/summary")),
+  });
 
   return (
     <main style={pageStyle}>

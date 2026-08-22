@@ -9,3 +9,7 @@ export * from "./schemas/exercise";
 export * from "./schemas/user";
 export * from "./schemas/onboarding";
 export * from "./schemas/regime";
+export * from "./schemas/session-log";
+export * from "./schemas/workout-session";
+export * from "./schemas/progress";
+export * from "./schemas/adjustment-event";

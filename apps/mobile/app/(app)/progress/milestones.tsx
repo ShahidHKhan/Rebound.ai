@@ -1,14 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { Button } from "../../../components/Button";
-import { trpc } from "../../../lib/trpc";
+import { unwrap } from "../../../lib/rest/api-error";
+import { useApi } from "../../../lib/rest/ApiProvider";
+import { qk } from "../../../lib/rest/query-keys";
 import { useSharedStyles } from "../../../lib/styles";
 
 export default function MilestonesScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
-  const milestones = trpc.progress.milestones.useQuery();
+  const api = useApi();
+  const milestones = useQuery({
+    queryKey: qk.milestones(),
+    queryFn: async () => unwrap(await api.GET("/progress/milestones")),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

@@ -21,3 +21,7 @@ export {
 } from "./handlers/user";
 export { submitOnboarding, getOnboardingJobStatus } from "./handlers/onboarding";
 export { getRegimeById, activateRegime, restartRegime } from "./handlers/regime";
+export { listSessionLogs, createSessionLog } from "./handlers/session-log";
+export { getWorkoutSessionToday, completeWorkoutSession } from "./handlers/workout-session";
+export { getProgressSummary, getStreakCalendar, getMilestones } from "./handlers/progress";
+export { listAdjustmentEvents } from "./handlers/adjustment-event";

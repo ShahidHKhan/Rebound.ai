@@ -1,8 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 720, margin: "0 auto", padding: "2rem" };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
@@ -19,7 +22,10 @@ const TRIGGER_LABEL: Record<string, string> = {
 };
 
 export default function AdjustmentsPage() {
-  const eventsQuery = trpc.adjustmentEvent.list.useQuery();
+  const eventsQuery = useQuery({
+    queryKey: qk.adjustmentEvents(),
+    queryFn: async () => unwrap(await api.GET("/adjustment-events")),
+  });
 
   return (
     <main style={pageStyle}>

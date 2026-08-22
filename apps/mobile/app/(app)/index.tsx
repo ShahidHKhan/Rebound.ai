@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, AppState, ScrollView, Text, TextInput, View } from "react-native";
@@ -7,8 +7,8 @@ import { ActivityIndicator, Alert, AppState, ScrollView, Text, TextInput, View }
 import { Button } from "../../components/Button";
 import { unwrap } from "../../lib/rest/api-error";
 import { useApi } from "../../lib/rest/ApiProvider";
+import { qk } from "../../lib/rest/query-keys";
 import { useSharedStyles } from "../../lib/styles";
-import { trpc } from "../../lib/trpc";
 import { syncDailyNotifications, type TodayData } from "../../lib/notifications";
 
 type SessionSlot = "MORNING" | "EVENING";
@@ -87,7 +87,7 @@ function SessionCard({
         </Text>
       ))}
       {session?.completedAt ? (
-        <Text>Completed at {session.completedAt.toLocaleTimeString()}</Text>
+        <Text>Completed at {new Date(session.completedAt).toLocaleTimeString()}</Text>
       ) : (
         <>
           <Button
@@ -118,7 +118,11 @@ const TRIGGER_LABEL: Record<string, string> = {
 // moment — surfaced whenever the active regime isn't the original version.
 function AdjustmentExplainer({ regimeId, versionNumber }: { regimeId: string; versionNumber: number }) {
   const shared = useSharedStyles();
-  const eventsQuery = trpc.adjustmentEvent.list.useQuery();
+  const api = useApi();
+  const eventsQuery = useQuery({
+    queryKey: qk.adjustmentEvents(),
+    queryFn: async () => unwrap(await api.GET("/adjustment-events")),
+  });
 
   if (versionNumber <= 1) return null;
   if (!eventsQuery.data) return null;
@@ -145,11 +149,17 @@ function AdjustmentExplainer({ regimeId, versionNumber }: { regimeId: string; ve
 export default function HomeScreen() {
   const { signOut } = useAuth();
   const shared = useSharedStyles();
-  const utils = trpc.useUtils();
-  const today = trpc.workoutSession.today.useQuery();
+  const api = useApi();
+  const queryClient = useQueryClient();
+  const today = useQuery({
+    queryKey: qk.workoutSessionsToday(),
+    queryFn: async () => unwrap(await api.GET("/workout-sessions/today")),
+  });
 
-  const completeSession = trpc.workoutSession.complete.useMutation({
-    onSuccess: () => utils.workoutSession.today.invalidate(),
+  const completeSession = useMutation({
+    mutationFn: async (workoutSessionId: string) =>
+      unwrap(await api.POST("/workout-sessions/{id}/complete", { params: { path: { id: workoutSessionId } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.workoutSessionsToday() }),
   });
 
   const [painScore, setPainScore] = useState("0");
@@ -157,10 +167,12 @@ export default function HomeScreen() {
   const [perceivedExertion, setPerceivedExertion] = useState("");
   const [logResult, setLogResult] = useState<{ action: string; reasons: string[] } | null>(null);
 
-  const logSession = trpc.sessionLog.create.useMutation({
+  const logSession = useMutation({
+    mutationFn: async (input: { painScore: number; flag: boolean; perceivedExertion?: number }) =>
+      unwrap(await api.POST("/session-logs", { body: input })),
     onSuccess: (result) => {
       setLogResult({ action: result.escalation.action, reasons: result.escalation.reasons });
-      utils.workoutSession.today.invalidate();
+      queryClient.invalidateQueries({ queryKey: qk.workoutSessionsToday() });
     },
   });
 
@@ -195,7 +207,7 @@ export default function HomeScreen() {
     );
   }
 
-  if (!today.data?.regime) {
+  if (!today.data || !today.data.regime) {
     return (
       <View style={shared.centeredPage}>
         <Text style={shared.title}>Rebound.ai</Text>
@@ -213,6 +225,13 @@ export default function HomeScreen() {
   }
 
   const data = today.data;
+  // Redundant with the guard above (already returned if !today.data.regime)
+  // — re-established here because TS's narrowing doesn't survive the
+  // `const data = today.data` aliasing for this generated nested type (same
+  // gap hit on web's identical pattern — apps/web/src/app/today/page.tsx).
+  // Not a logic change, just closing a real narrowing gap the openapi-fetch
+  // response type introduced that tRPC's inferred type never had.
+  if (!data.regime) return null;
 
   return (
     <ScrollView contentContainerStyle={shared.page}>
@@ -228,7 +247,7 @@ export default function HomeScreen() {
         data={data}
         completing={completeSession.isPending}
         completeError={completeSession.isError ? completeSession.error.message : null}
-        onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
+        onComplete={(id) => completeSession.mutate(id)}
       />
       <SessionCard
         slot="EVENING"
@@ -236,7 +255,7 @@ export default function HomeScreen() {
         data={data}
         completing={completeSession.isPending}
         completeError={completeSession.isError ? completeSession.error.message : null}
-        onComplete={(id) => completeSession.mutate({ workoutSessionId: id })}
+        onComplete={(id) => completeSession.mutate(id)}
       />
 
       <View style={shared.card}>

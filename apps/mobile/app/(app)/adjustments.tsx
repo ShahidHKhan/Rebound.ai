@@ -1,8 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { Button } from "../../components/Button";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
+import { qk } from "../../lib/rest/query-keys";
 import { useSharedStyles } from "../../lib/styles";
 
 const TRIGGER_LABEL: Record<string, string> = {
@@ -13,7 +16,11 @@ const TRIGGER_LABEL: Record<string, string> = {
 export default function AdjustmentsScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
-  const eventsQuery = trpc.adjustmentEvent.list.useQuery();
+  const api = useApi();
+  const eventsQuery = useQuery({
+    queryKey: qk.adjustmentEvents(),
+    queryFn: async () => unwrap(await api.GET("/adjustment-events")),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

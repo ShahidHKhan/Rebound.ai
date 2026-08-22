@@ -1,8 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 720, margin: "0 auto", padding: "2rem" };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
@@ -25,7 +28,10 @@ const stickyThStyle: React.CSSProperties = {
 };
 
 export default function HistoryPage() {
-  const logsQuery = trpc.sessionLog.list.useQuery();
+  const logsQuery = useQuery({
+    queryKey: qk.sessionLogs(),
+    queryFn: async () => unwrap(await api.GET("/session-logs")),
+  });
 
   return (
     <main style={pageStyle}>

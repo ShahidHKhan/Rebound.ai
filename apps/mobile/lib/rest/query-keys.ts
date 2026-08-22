@@ -5,4 +5,10 @@ export const qk = {
   exercise: (id: string) => ["exercises", id] as const,
   me: () => ["users", "me"] as const,
   notificationTimes: () => ["users", "me", "notification-times"] as const,
+  workoutSessionsToday: () => ["workout-sessions", "today"] as const,
+  sessionLogs: () => ["session-logs"] as const,
+  adjustmentEvents: () => ["adjustment-events"] as const,
+  progressSummary: () => ["progress", "summary"] as const,
+  streakCalendar: () => ["progress", "streak-calendar"] as const,
+  milestones: () => ["progress", "milestones"] as const,
 };
