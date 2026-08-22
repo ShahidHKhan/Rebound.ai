@@ -1,6 +1,28 @@
+// LOCAL-midnight anchor — reserved for actual wall-clock scheduling
+// (computeSessionTimes below, and the WorkoutSession.date column it's
+// written alongside), where "today" genuinely means the server's local
+// calendar day. Do NOT use this for day-boundary comparisons against
+// toDateKey-keyed data (SessionLog.loggedAt grouping, streak/calendar
+// windows) — see startOfTodayUTC for that. Mixing the two was a real bug:
+// createSessionLog's once-daily guard used this local anchor while
+// toDateKey groups by UTC day, so two logs made on either side of local
+// midnight but within the same UTC day could both be created (guard never
+// saw them as "the same day") and then collide into one key when displayed
+// (confirmed live 2026-08-22, two real SessionLog rows both keying to the
+// same UTC date, crashing a React list with a duplicate-key error).
 export function startOfToday(): Date {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+// UTC-midnight anchor — use this wherever a day boundary must agree with
+// toDateKey's UTC-based grouping (the once-daily SessionLog guard, pain
+// trend/streak-calendar windows). See startOfToday's comment for the bug
+// this exists to prevent.
+export function startOfTodayUTC(): Date {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
   return today;
 }
 

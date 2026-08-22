@@ -6,7 +6,7 @@ import type { CreateSessionLogInput, CreateSessionLogResponse, SessionLogRespons
 
 import type { Prisma } from "@rebound/db";
 
-import { startOfToday } from "../date-utils";
+import { startOfTodayUTC } from "../date-utils";
 import { ApiError } from "../errors";
 
 type Ctx = { prisma: Prisma.TransactionClient; userId: string };
@@ -60,9 +60,11 @@ export async function createSessionLog(ctx: Ctx, input: CreateSessionLogInput): 
   // Daily Session Structure: stat logging happens once daily. The
   // @@unique([userId, loggedAt]) constraint doesn't actually enforce this
   // (loggedAt defaults to the exact submission instant), so it has to be
-  // checked explicitly here.
+  // checked explicitly here. UTC-anchored (not startOfToday's local
+  // midnight) so this boundary agrees with toDateKey's UTC-day grouping —
+  // see startOfToday's own comment in date-utils.ts for the bug this fixes.
   const existingLogToday = await ctx.prisma.sessionLog.findFirst({
-    where: { userId: ctx.userId, loggedAt: { gte: startOfToday() } },
+    where: { userId: ctx.userId, loggedAt: { gte: startOfTodayUTC() } },
   });
   if (existingLogToday) {
     throw new ApiError("CONFLICT", "You've already logged today.");

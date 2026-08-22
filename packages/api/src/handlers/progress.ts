@@ -2,7 +2,7 @@ import type { MilestonesResponse, ProgressSummaryResponse, StreakCalendarRespons
 
 import type { Prisma, PrismaClient } from "@rebound/db";
 
-import { addDays, daysBetween, startOfToday, toDateKey } from "../date-utils";
+import { addDays, daysBetween, startOfTodayUTC, toDateKey } from "../date-utils";
 import { computeMilestones } from "../milestones";
 import { computeCurrentStreak } from "../streak";
 
@@ -15,7 +15,11 @@ const CALENDAR_DAYS = 60;
 // Shared by getProgressSummary/getStreakCalendar/getMilestones — mirrors
 // packages/api/src/routers/progress.ts's getProgressData exactly.
 async function getProgressData(userId: string, prisma: Db) {
-  const today = startOfToday();
+  // UTC-anchored — everything below (trendStart, painTrend's toDateKey,
+  // getStreakCalendar's windowStart) is pure UTC-day arithmetic, so the
+  // anchor needs to match rather than mixing in a local-midnight boundary.
+  // See date-utils.ts's startOfToday/startOfTodayUTC comments.
+  const today = startOfTodayUTC();
   const trendStart = addDays(today, -(PAIN_TREND_DAYS - 1));
 
   const [painLogs, allSessions, completedSessionDates, firstSession, user] = await Promise.all([

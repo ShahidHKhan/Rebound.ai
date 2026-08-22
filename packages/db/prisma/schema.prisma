@@ -354,6 +354,9 @@ model WorkoutSession {
   slot         SessionSlot
   scheduledAt  DateTime
   completedAt  DateTime?
+  // Elapsed time of a guided session (apps/*/session/[slot]), client-timed.
+  // Null for the quick "mark complete" path, which has no duration to report.
+  durationSeconds Int?
 
   exercisesCompleted WorkoutSessionExercise[]
 

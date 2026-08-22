@@ -20,6 +20,22 @@ const cardStyle: React.CSSProperties = {
   marginBottom: "1rem",
 };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
+// A <Link> styled to read as the primary action, matching the browser's
+// default <button> chrome (no custom button component exists in this app —
+// see globals.css's button/input baseline) so "Begin workout session" sits
+// visually above the plain-<button> "Mark session complete" below it.
+const buttonLinkStyle: React.CSSProperties = {
+  display: "block",
+  textAlign: "center",
+  textDecoration: "none",
+  minHeight: 44,
+  lineHeight: "28px",
+  padding: "0.5rem 1rem",
+  border: "1px solid #767676",
+  borderRadius: 4,
+  background: "#e9e9ed",
+  color: "inherit",
+};
 
 function SessionCard({
   slot,
@@ -59,6 +75,11 @@ function SessionCard({
         <p>Completed at {new Date(session.completedAt).toLocaleTimeString()}</p>
       ) : (
         <>
+          {exercises.length > 0 && session && (
+            <Link href={`/session/${slot}`} style={{ ...buttonLinkStyle, marginBottom: "0.5rem" }}>
+              Begin workout session
+            </Link>
+          )}
           <button type="button" disabled={completing || !session} onClick={() => session && onComplete(session.id)}>
             {completing ? (
               <>

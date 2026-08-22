@@ -14,6 +14,7 @@ export const workoutSessionResponseSchema = registry.register(
     slot: sessionSlotSchema,
     scheduledAt: z.string().datetime(),
     completedAt: z.string().datetime().nullable(),
+    durationSeconds: z.number().int().nullable(),
   })
 );
 export type WorkoutSessionResponse = z.infer<typeof workoutSessionResponseSchema>;
@@ -36,11 +37,19 @@ export const workoutSessionTodayResponseSchema = registry.register(
 );
 export type WorkoutSessionTodayResponse = z.infer<typeof workoutSessionTodayResponseSchema>;
 
+// Optional — the existing "quick complete" button sends no body at all.
+// Only the guided session (apps/*/session/[slot]) reports a duration.
+export const completeWorkoutSessionRequestSchema = z.object({
+  durationSeconds: z.number().int().min(0).optional(),
+});
+export type CompleteWorkoutSessionInput = z.infer<typeof completeWorkoutSessionRequestSchema>;
+
 export const completeWorkoutSessionResponseSchema = registry.register(
   "CompleteWorkoutSessionResponse",
   z.object({
     workoutSessionId: z.string(),
     completedAt: z.string().datetime().nullable(),
+    durationSeconds: z.number().int().nullable(),
   })
 );
 export type CompleteWorkoutSessionResponse = z.infer<typeof completeWorkoutSessionResponseSchema>;
@@ -65,7 +74,10 @@ registry.registerPath({
   tags: ["workout-session"],
   summary: "Mark a workout session complete",
   security: [{ bearerAuth: [] }],
-  request: { params: workoutSessionIdParamSchema },
+  request: {
+    params: workoutSessionIdParamSchema,
+    body: { content: { "application/json": { schema: completeWorkoutSessionRequestSchema } }, required: false },
+  },
   responses: {
     200: {
       description: "Completed",

@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, AppState, ScrollView, Text, TextInput, View } from "react-native";
 
@@ -67,6 +67,7 @@ function SessionCard({
   completeError: string | null;
 }) {
   const shared = useSharedStyles();
+  const router = useRouter();
 
   if (!data.regime) return null;
 
@@ -90,6 +91,9 @@ function SessionCard({
         <Text>Completed at {new Date(session.completedAt).toLocaleTimeString()}</Text>
       ) : (
         <>
+          {exercises.length > 0 && session && (
+            <Button label="Begin workout session" onPress={() => router.push(`/session/${slot}`)} />
+          )}
           <Button
             label="Mark session complete"
             variant="secondary"
