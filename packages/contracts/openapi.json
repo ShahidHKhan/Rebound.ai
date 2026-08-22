@@ -226,6 +226,121 @@
         "required": [
           "success"
         ]
+      },
+      "OnboardingSubmitCrisisResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "crisis_detected"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "reasons"
+        ]
+      },
+      "OnboardingSubmitRedFlaggedResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "red_flagged"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "reasons"
+        ]
+      },
+      "OnboardingSubmitCooldownResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "cooldown_active"
+            ]
+          },
+          "regimeCreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "status",
+          "regimeCreatedAt"
+        ]
+      },
+      "OnboardingSubmitJobCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "job_created"
+            ]
+          },
+          "jobId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "jobId"
+        ]
+      },
+      "OnboardingJobStatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "COMPLETE",
+              "FAILED"
+            ]
+          },
+          "resultRegimeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "resultRegimeId",
+          "createdAt",
+          "completedAt"
+        ]
       }
     },
     "parameters": {}
@@ -484,6 +599,232 @@
           },
           "401": {
             "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/onboarding": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Submit onboarding answers — screens for crisis/red-flag/cooldown, else kicks off async regime generation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "answers": {
+                    "type": "object",
+                    "properties": {
+                      "age": {
+                        "type": "integer",
+                        "minimum": 13,
+                        "maximum": 120
+                      },
+                      "goalType": {
+                        "type": "string",
+                        "enum": [
+                          "INJURY_RECOVERY",
+                          "STRENGTH",
+                          "MOBILITY",
+                          "GENERAL_FITNESS"
+                        ]
+                      },
+                      "conditionFlags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "injurySeverity": {
+                        "type": "string",
+                        "enum": [
+                          "none",
+                          "mild",
+                          "moderate",
+                          "severe"
+                        ]
+                      },
+                      "redFlags": {
+                        "type": "object",
+                        "properties": {
+                          "severeSuddenPain": {
+                            "type": "boolean"
+                          },
+                          "numbnessOrTingling": {
+                            "type": "boolean"
+                          },
+                          "recentTrauma": {
+                            "type": "boolean"
+                          },
+                          "recentSurgery": {
+                            "type": "boolean"
+                          },
+                          "pregnancyRelated": {
+                            "type": "boolean"
+                          },
+                          "cardiacSymptomsWithExertion": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "severeSuddenPain",
+                          "numbnessOrTingling",
+                          "recentTrauma",
+                          "recentSurgery",
+                          "pregnancyRelated",
+                          "cardiacSymptomsWithExertion"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "age",
+                      "goalType",
+                      "conditionFlags",
+                      "injurySeverity",
+                      "redFlags"
+                    ]
+                  },
+                  "targetMovement": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "symptomsText": {
+                    "type": "string",
+                    "maxLength": 750
+                  },
+                  "lifestyleContextText": {
+                    "type": "string",
+                    "maxLength": 750
+                  },
+                  "wakeTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "eveningTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "availableEquipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "BODY_ONLY",
+                        "MACHINE",
+                        "OTHER",
+                        "FOAM_ROLL",
+                        "KETTLEBELLS",
+                        "DUMBBELL",
+                        "CABLE",
+                        "BARBELL",
+                        "BANDS",
+                        "MEDICINE_BALL",
+                        "EXERCISE_BALL",
+                        "EZ_CURL_BAR"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "answers",
+                  "targetMovement",
+                  "symptomsText",
+                  "lifestyleContextText"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Always 200 — all four outcomes (crisis_detected/red_flagged/cooldown_active/job_created) are successful screening results, not errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitCrisisResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitRedFlaggedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitCooldownResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitJobCreatedResponse"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "status",
+                    "mapping": {
+                      "crisis_detected": "#/components/schemas/OnboardingSubmitCrisisResponse",
+                      "red_flagged": "#/components/schemas/OnboardingSubmitRedFlaggedResponse",
+                      "cooldown_active": "#/components/schemas/OnboardingSubmitCooldownResponse",
+                      "job_created": "#/components/schemas/OnboardingSubmitJobCreatedResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/onboarding/jobs/{jobId}": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Poll a regime-generation job's status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "jobId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingJobStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Job belongs to another user"
           }
         }
       }

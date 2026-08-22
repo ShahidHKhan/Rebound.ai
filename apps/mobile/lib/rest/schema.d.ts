@@ -304,6 +304,135 @@ export interface paths {
         };
         trace?: never;
     };
+    "/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit onboarding answers — screens for crisis/red-flag/cooldown, else kicks off async regime generation */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        answers: {
+                            age: number;
+                            /** @enum {string} */
+                            goalType: "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
+                            conditionFlags: string[];
+                            /** @enum {string} */
+                            injurySeverity: "none" | "mild" | "moderate" | "severe";
+                            redFlags: {
+                                severeSuddenPain: boolean;
+                                numbnessOrTingling: boolean;
+                                recentTrauma: boolean;
+                                recentSurgery: boolean;
+                                pregnancyRelated: boolean;
+                                cardiacSymptomsWithExertion: boolean;
+                            };
+                        };
+                        targetMovement: string;
+                        symptomsText: string;
+                        lifestyleContextText: string;
+                        wakeTimeMinutes?: number;
+                        eveningTimeMinutes?: number;
+                        availableEquipment?: ("BODY_ONLY" | "MACHINE" | "OTHER" | "FOAM_ROLL" | "KETTLEBELLS" | "DUMBBELL" | "CABLE" | "BARBELL" | "BANDS" | "MEDICINE_BALL" | "EXERCISE_BALL" | "EZ_CURL_BAR")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Always 200 — all four outcomes (crisis_detected/red_flagged/cooldown_active/job_created) are successful screening results, not errors. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingSubmitCrisisResponse"] | components["schemas"]["OnboardingSubmitRedFlaggedResponse"] | components["schemas"]["OnboardingSubmitCooldownResponse"] | components["schemas"]["OnboardingSubmitJobCreatedResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Poll a regime-generation job's status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingJobStatusResponse"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Job belongs to another user */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -359,6 +488,49 @@ export interface components {
         DeleteMyAccountResponse: {
             /** @enum {boolean} */
             success: true;
+        };
+        OnboardingSubmitCrisisResponse: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "crisis_detected";
+            reasons: string[];
+        };
+        OnboardingSubmitRedFlaggedResponse: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "red_flagged";
+            reasons: string[];
+        };
+        OnboardingSubmitCooldownResponse: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "cooldown_active";
+            /** Format: date-time */
+            regimeCreatedAt: string;
+        };
+        OnboardingSubmitJobCreatedResponse: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "job_created";
+            jobId: string;
+        };
+        OnboardingJobStatusResponse: {
+            id: string;
+            /** @enum {string} */
+            status: "PENDING" | "COMPLETE" | "FAILED";
+            resultRegimeId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
         };
     };
     responses: never;

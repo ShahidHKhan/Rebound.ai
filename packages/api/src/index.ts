@@ -19,3 +19,4 @@ export {
   updateNotificationTimes,
   deleteMyAccount,
 } from "./handlers/user";
+export { submitOnboarding, getOnboardingJobStatus } from "./handlers/onboarding";

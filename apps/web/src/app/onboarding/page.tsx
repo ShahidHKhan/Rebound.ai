@@ -1,9 +1,14 @@
 "use client";
 
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import type { paths } from "@/lib/rest/schema";
+
+type OnboardingSubmitInput = NonNullable<paths["/onboarding"]["post"]["requestBody"]>["content"]["application/json"];
 
 type GoalType = "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
 type InjurySeverity = "none" | "mild" | "moderate" | "severe";
@@ -177,7 +182,8 @@ export default function OnboardingPage() {
   const [crisisDetected, setCrisisDetected] = useState(false);
   const [cooldownRegimeCreatedAt, setCooldownRegimeCreatedAt] = useState<Date | null>(null);
 
-  const submit = trpc.onboarding.submit.useMutation({
+  const submit = useMutation({
+    mutationFn: async (input: OnboardingSubmitInput) => unwrap(await api.POST("/onboarding", { body: input })),
     onSuccess: (result) => {
       if (result.status === "crisis_detected") {
         setCrisisDetected(true);
@@ -191,13 +197,13 @@ export default function OnboardingPage() {
     },
   });
 
-  const jobStatus = trpc.onboarding.getJobStatus.useQuery(
-    { jobId: jobId ?? "" },
-    {
-      enabled: jobId !== null,
-      refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 2000 : false),
-    }
-  );
+  const jobStatus = useQuery({
+    queryKey: ["onboarding", "jobs", jobId],
+    queryFn: async () =>
+      unwrap(await api.GET("/onboarding/jobs/{jobId}", { params: { path: { jobId: jobId ?? "" } } })),
+    enabled: jobId !== null,
+    refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 2000 : false),
+  });
 
   function toggleConditionFlag(value: string) {
     setConditionFlags((prev) => (prev.includes(value) ? prev.filter((flag) => flag !== value) : [...prev, value]));
