@@ -378,7 +378,7 @@ The Data Model defines the objects; this defines how they get measured against t
 **CI/CD & Version Control:** GitHub + GitHub Actions
 
 - Standard, well-documented, integrates cleanly with Vercel's deploy hooks.
-- **Branching model** (set up 2026-08-18, see `HANDOFF.md` for full operational detail): `feature/<name>` branches off `dev` → PR into `dev` (integration) → PR `dev` into `stage` (pre-prod) → PR `stage` into `main` (production). `main` and `stage` require PRs, no direct pushes; `dev`/`feature/*` stay open. No GitHub Actions workflows exist yet — CI (typecheck/tests on PRs into these branches) is still a TODO, not wired up.
+- **Branching model** (set up 2026-08-18, see `HANDOFF.md` for full operational detail): `feature/<name>` branches off `dev` → PR into `dev` (integration) → PR `dev` into `main` (production). A `stage` (pre-prod) tier exists but is deliberately out of the promotion chain for now (2026-08-22) — planned to be reinstated once the project reaches a later point. `main` requires PRs, no direct pushes; `dev`/`feature/*` stay open. GitHub Actions CI (`.github/workflows/typecheck.yml`) runs on every PR into `dev`/`stage`/`main`: monorepo typecheck, OpenAPI-artifact drift check, RLS policy coverage check, and the test suites (unit + a live-DB RLS cross-user isolation test).
 
 **Security & RLS:** Postgres Row Level Security (via Supabase, enforced using Clerk JWT claims) + standard OWASP practices + a secrets manager (Doppler or Vercel's built-in environment variable store)
 
