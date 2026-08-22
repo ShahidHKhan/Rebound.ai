@@ -37,4 +37,13 @@ jobs:
             exit 1
           fi
 
+      # Next.js 16's typed-routes feature (PageProps/LayoutProps used across
+      # apps/web) is ambient global types written to the gitignored
+      # .next/types/ — normally produced by `next dev`/`next build`. A clean
+      # CI checkout has neither, so `tsc --noEmit` fails on a fresh clone
+      # without this. `next typegen` generates just the types, no full build.
+      - name: Generate Next.js route types
+        working-directory: apps/web
+        run: npx next typegen
+
       - run: pnpm typecheck
