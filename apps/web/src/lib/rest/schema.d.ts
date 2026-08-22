@@ -792,7 +792,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        durationSeconds?: number;
+                    };
+                };
+            };
             responses: {
                 /** @description Completed */
                 200: {
@@ -2077,6 +2083,7 @@ export interface components {
             scheduledAt: string;
             /** Format: date-time */
             completedAt: string | null;
+            durationSeconds: number | null;
         };
         WorkoutSessionToday: {
             regime: {
@@ -2114,6 +2121,7 @@ export interface components {
             workoutSessionId: string;
             /** Format: date-time */
             completedAt: string | null;
+            durationSeconds: number | null;
         };
         ProgressSummary: {
             painTrend: {

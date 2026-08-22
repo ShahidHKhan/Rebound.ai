@@ -1,4 +1,5 @@
 import type {
+  CompleteWorkoutSessionInput,
   CompleteWorkoutSessionResponse,
   SessionLogResponse,
   WorkoutSessionResponse,
@@ -7,7 +8,7 @@ import type {
 
 import type { Prisma, PrismaClient } from "@rebound/db";
 
-import { computeSessionTimes, startOfToday } from "../date-utils";
+import { computeSessionTimes, startOfToday, startOfTodayUTC } from "../date-utils";
 import { ApiError } from "../errors";
 import { computeCurrentStreak } from "../streak";
 import { toRegimeExerciseListResponse } from "./regime";
@@ -22,7 +23,11 @@ async function getCurrentStreak(userId: string, prisma: PrismaClient | Prisma.Tr
   });
 
   const completedDays = new Set(completedSessions.map((s) => s.date.toISOString().slice(0, 10)));
-  return computeCurrentStreak(completedDays, startOfToday());
+  // UTC-anchored to match completedDays' toISOString()-derived keys — see
+  // date-utils.ts's startOfToday/startOfTodayUTC comments. startOfToday
+  // (local) stays reserved for this file's other use, scheduling today's
+  // WorkoutSession rows via computeSessionTimes.
+  return computeCurrentStreak(completedDays, startOfTodayUTC());
 }
 
 function toWorkoutSessionResponse(session: {
@@ -33,6 +38,7 @@ function toWorkoutSessionResponse(session: {
   slot: "MORNING" | "EVENING";
   scheduledAt: Date;
   completedAt: Date | null;
+  durationSeconds: number | null;
 }): WorkoutSessionResponse {
   return {
     id: session.id,
@@ -42,6 +48,7 @@ function toWorkoutSessionResponse(session: {
     slot: session.slot,
     scheduledAt: session.scheduledAt.toISOString(),
     completedAt: session.completedAt?.toISOString() ?? null,
+    durationSeconds: session.durationSeconds,
   };
 }
 
@@ -144,7 +151,7 @@ export async function getWorkoutSessionToday(ctx: Ctx): Promise<WorkoutSessionTo
 
 export async function completeWorkoutSession(
   ctx: Ctx,
-  input: { workoutSessionId: string }
+  input: { workoutSessionId: string } & CompleteWorkoutSessionInput
 ): Promise<CompleteWorkoutSessionResponse> {
   const session = await ctx.prisma.workoutSession.findUniqueOrThrow({
     where: { id: input.workoutSessionId },
@@ -154,10 +161,27 @@ export async function completeWorkoutSession(
     throw new ApiError("FORBIDDEN");
   }
 
+  // Idempotent: a second completion (e.g. the guided session's "Finish"
+  // racing the quick-complete button, or a retried request) must not
+  // overwrite an already-recorded completedAt/durationSeconds with a later
+  // timestamp — there is no un-complete path anywhere in this codebase, so
+  // the first completion should be the one that sticks.
+  if (session.completedAt) {
+    return {
+      workoutSessionId: session.id,
+      completedAt: session.completedAt.toISOString(),
+      durationSeconds: session.durationSeconds,
+    };
+  }
+
   const updated = await ctx.prisma.workoutSession.update({
     where: { id: input.workoutSessionId },
-    data: { completedAt: new Date() },
+    data: { completedAt: new Date(), durationSeconds: input.durationSeconds ?? null },
   });
 
-  return { workoutSessionId: updated.id, completedAt: updated.completedAt?.toISOString() ?? null };
+  return {
+    workoutSessionId: updated.id,
+    completedAt: updated.completedAt?.toISOString() ?? null,
+    durationSeconds: updated.durationSeconds,
+  };
 }

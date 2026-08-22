@@ -750,6 +750,10 @@
             "type": "string",
             "nullable": true,
             "format": "date-time"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "required": [
@@ -759,7 +763,8 @@
           "date",
           "slot",
           "scheduledAt",
-          "completedAt"
+          "completedAt",
+          "durationSeconds"
         ]
       },
       "WorkoutSessionToday": {
@@ -920,11 +925,16 @@
             "type": "string",
             "nullable": true,
             "format": "date-time"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "required": [
           "workoutSessionId",
-          "completedAt"
+          "completedAt",
+          "durationSeconds"
         ]
       },
       "ProgressSummary": {
@@ -2843,6 +2853,22 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "durationSeconds": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Completed",
