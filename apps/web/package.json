@@ -11,27 +11,27 @@
     "generate": "openapi-typescript ../../packages/contracts/openapi.json -o src/lib/rest/schema.d.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.14.0",
+    "@clerk/nextjs": "^7.7.8",
     "@rebound/agents": "workspace:*",
     "@rebound/api": "workspace:*",
     "@rebound/clinical-rules": "workspace:*",
     "@rebound/contracts": "workspace:*",
     "@rebound/db": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
-    "next": "16.3.0",
-    "openapi-fetch": "^0.13.0",
+    "next": "16.3.1",
+    "openapi-fetch": "^0.17.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "svix": "^1.99.1",
-    "zod": "^3.24.1"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.0",
+    "eslint": "^10",
+    "eslint-config-next": "16.3.1",
     "openapi-typescript": "^7.4.0",
-    "typescript": "^5"
+    "typescript": "^7"
   }
 }
