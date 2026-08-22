@@ -1,0 +1,50 @@
+# Vercel's CLI does not reliably fall back to .gitignore for source-upload
+# exclusion in this version, confirmed 2026-08-22: a 492MB local Turborepo
+# build-cache archive (.turbo/cache/*.tar.zst, already gitignored) was swept
+# into a `vercel --prod` upload and failed the deploy on Vercel's 100MB
+# per-file limit. Mirrors .gitignore's exclusions — none of this needs to
+# reach Vercel, which does its own remote install/build.
+
+# dependencies
+node_modules/
+.pnpm-store/
+
+# turborepo
+.turbo/
+
+# next.js
+.next/
+out/
+
+# expo
+.expo/
+dist/
+web-build/
+
+# prisma
+packages/db/generated/
+
+# env — Vercel injects these directly, files aren't read at build/runtime
+.env
+.env.local
+.env.*.local
+
+# build
+build/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+
+# claude code local skills/plugins
+.claude/
