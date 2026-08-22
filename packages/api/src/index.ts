@@ -1,6 +1,12 @@
 export { ApiError } from "./errors";
 export type { ApiErrorCode } from "./errors";
 
+// Rate limiting — RATE_LIMITS holds the whole policy; the wrapper that
+// applies it lives in apps/web/src/lib/rest/with-rate-limit.ts (it needs
+// Clerk's request-scoped auth(), which is a Next-runtime concern).
+export { consume, rateLimitError, sweepExpired, RATE_LIMITS } from "./rate-limit";
+export type { RateLimitRule, RateLimitResult } from "./rate-limit";
+
 // REST handlers — plain functions, one per resource action. Exported from
 // this same barrel (not a subpath like @rebound/api/handlers/health) to
 // match this package's existing single-entry-point convention — no

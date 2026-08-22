@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { applyEscalationRollback } from "@rebound/agents";
+import { sweepExpired } from "@rebound/api";
 import { checkEscalation } from "@rebound/clinical-rules";
 import type { SessionLogEntry } from "@rebound/clinical-rules";
 import { prisma } from "@rebound/db";
@@ -19,6 +20,15 @@ export async function GET(request: Request) {
   fourDaysAgoStart.setHours(0, 0, 0, 0);
   const fourDaysAgoEnd = new Date(fourDaysAgoStart);
   fourDaysAgoEnd.setHours(23, 59, 59, 999);
+
+  // Housekeeping, not correctness: consume() already treats an expired row as
+  // a fresh window, so this only reclaims space. Rides along with an existing
+  // daily job rather than earning a schedule (and a vercel.json entry) of its
+  // own. Failure here must never fail the day-4 check, hence the catch.
+  const sweptRateLimits = await sweepExpired().catch((err) => {
+    console.error("Rate limit sweep failed (non-fatal):", err);
+    return 0;
+  });
 
   const rollbacks = await prisma.adjustmentEvent.findMany({
     where: {
@@ -95,5 +105,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ checked: results.length, results });
+  return NextResponse.json({ checked: results.length, results, sweptRateLimits });
 }

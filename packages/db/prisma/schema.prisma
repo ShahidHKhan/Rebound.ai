@@ -556,3 +556,32 @@ model Scenario {
 
   @@map("scenarios")
 }
+
+// ── Rate Limiting ────────────────────────────────────────────────────────
+
+// Fixed-window rate-limit counters, keyed by "<scope>:<identity>" (see
+// packages/api/src/rate-limit.ts). Postgres-backed rather than Redis
+// because this app already has a Postgres connection on every request and
+// the protected routes are low-volume/high-cost (LLM generation), so the
+// extra round trip is irrelevant next to a multi-second model call — and
+// it means zero new infrastructure to provision. Swap the consume()
+// implementation for @upstash/ratelimit if request volume ever makes the
+// per-request write matter; nothing above that function needs to change.
+//
+// Not user-owned (rows exist for unauthenticated IPs too) and never read
+// through the restricted rebound_app role — the limiter runs on the
+// privileged client BEFORE withAuth's RLS transaction opens, so this table
+// gets the same enable-RLS-with-no-policies default-deny treatment as
+// llm_calls (see packages/db/sql/rls-policies.sql).
+model RateLimit {
+  // "<scope>:<identity>", e.g. "onboarding:user_2abc" or "auth:198.51.100.7"
+  key       String   @id
+  count     Int      @default(0)
+  // End of the current fixed window. A row whose expiresAt has passed is
+  // treated as a fresh window by consume()'s upsert, so expired rows are
+  // harmless — sweepExpired() only reclaims space.
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("rate_limits")
+}

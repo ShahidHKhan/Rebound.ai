@@ -6,6 +6,7 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "rate-limit-smoke": "dotenv -e ../db/.env -- tsx scripts/rate-limit-smoke.ts",
     "e2e-test": "dotenv -e .env -- tsx scripts/onboarding-e2e-test.ts",
     "escalation-e2e-test": "dotenv -e .env -- tsx scripts/escalation-e2e-test.ts",
     "restart-regime-e2e-test": "dotenv -e .env -- tsx scripts/restart-regime-e2e-test.ts",

@@ -12,6 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "generate": "turbo run generate",
+    "check:rls": "pnpm --filter @rebound/db check:rls",
     "db:generate": "pnpm --filter @rebound/db generate",
     "db:push": "pnpm --filter @rebound/db push",
     "db:studio": "pnpm --filter @rebound/db studio"

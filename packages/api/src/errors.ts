@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | "BAD_REQUEST"
   | "CONFLICT"
   | "NOT_FOUND"
+  | "TOO_MANY_REQUESTS"
   | "INTERNAL_SERVER_ERROR";
 
 export class ApiError extends Error {

@@ -383,10 +383,11 @@ The Data Model defines the objects; this defines how they get measured against t
 **Security & RLS:** Postgres Row Level Security (via Supabase, enforced using Clerk JWT claims) + standard OWASP practices + a secrets manager (Doppler or Vercel's built-in environment variable store)
 
 - RLS remains the technical mechanism enforcing per-user data isolation for pain/injury data — the Clerk + Supabase RLS integration preserves this even though Auth moved off Supabase's native auth.
+- Coverage is enforced mechanically, not just by convention: every table in `schema.prisma` must have an explicit RLS decision recorded in `packages/db/sql/rls-policies.sql`, checked by a CI script (`pnpm check:rls`) that fails the build by table name if one is missing. A real cross-user isolation test (two accounts, exercised through the restricted role) also runs in CI against a real database, proving RLS actually blocks a cross-user read/write rather than just trusting the policy file.
 
-**Rate Limiting:** Upstash Redis + a rate-limiting middleware in the Next.js API layer, or Vercel's/Cloudflare's built-in rate limiting
+**Rate Limiting:** Postgres-backed for v1 (a `RateLimit` table + an atomic per-request upsert in `packages/api`), applied to every `/api/v1` route
 
-- Protects both API abuse and LLM API spend, same reasoning as before — this doesn't change with the backend swap.
+- Protects both API abuse and LLM API spend. Landed as Postgres rather than standing up Upstash Redis immediately — the routes worth protecting (LLM generation) are already several seconds of model time, so one extra DB round trip is noise, and it's zero new infrastructure for a beta-scale cohort. The interface is deliberately shaped to match Upstash's rate-limiter return type, so swapping the backend later (see Production System Design) is a one-file change, not a rewrite.
 
 **Caching & CDN:** Vercel's built-in edge network/CDN + Upstash Redis (app-level caching for preset regimes and static exercise-library content)
 
@@ -454,6 +455,7 @@ See Clinical Risk Framing > Free-Text Input Handling for the full resolution: le
 | ORM | Prisma | Best-documented option for a first build; RLS-via-Clerk-JWT is a well-trodden path with Prisma + Supabase |
 | Environments | Vercel preview deploys (free, automatic) double as staging; one beta environment tracks toward production | No separate staging infra to build or pay for at this stage |
 | Admin tooling | Basic internal admin view in v1 | No clinician in the loop yet — you need visibility into flagged users and a manual override, not just automated guardrails |
+| Rate limiting (v1) | Postgres-backed, added ahead of original schedule | A security review found LLM-generation routes had no spend guard beyond auth; Postgres avoided standing up Upstash before it was load-bearing, with a documented swap point for when it is |
 | Beta data | Separate Supabase project — fresh database at real launch | Beta exists to surface bugs in the AI logic itself, so beta data will have inconsistencies baked in (pre-fix regimes, pre-counsel-reviewed ToS consent); a clean cutover keeps Success Metrics trustworthy and avoids re-consent headaches. Select beta accounts can be manually migrated post-launch if worth preserving. |
 
 ## V1 (Beta) System Design
@@ -607,7 +609,7 @@ Vercel's automatic preview deployments (one per branch/PR) function as staging a
 
 - Stripe/paywall — beta stays free per your trial mechanics
 - Managed job queue or workflow engine (Inngest, Trigger.dev, etc.) — Vercel Cron + inline handling covers beta-scale volume
-- Upstash Redis rate limiting/caching — add once beta opens beyond a small invited/trusted cohort
+- Upstash Redis for rate limiting/caching — base rate limiting itself now exists (Postgres-backed, all `/api/v1` routes), added ahead of schedule after a security review; Redis remains the deferred *upgrade path* if request volume ever makes the per-request DB write matter, or once app-level caching (exercise library, preset regimes) is worth adding
 - A truly separate staging database — Vercel preview deploys cover this need for now
 
 ## Production System Design (notes for later — not building yet)
@@ -615,7 +617,7 @@ Vercel's automatic preview deployments (one per branch/PR) function as staging a
 These aren't v1 tasks. They're the "when you hit this wall, here's the move" reference for the team, so the production redesign isn't done from a blank page.
 
 - **Move Flow B (and possibly Flow A) to a managed workflow engine** (Inngest or Trigger.dev) once any of: LLM call retries/backoff need per-job observability, the weekly user loop risks exceeding a single serverless function's max duration, or you want job dashboards without hand-building them.
-- **Introduce Upstash Redis** for rate limiting (protects both API abuse and LLM spend) and caching (exercise library, preset regimes) — already named in Tech Stack, just not load-bearing at beta scale.
+- **Introduce Upstash Redis**, swapping in for the v1 Postgres-backed rate limiter (protects both API abuse and LLM spend) and adding caching (exercise library, preset regimes) — already named in Tech Stack, just not load-bearing at beta scale. The swap point is `consume()` in `packages/api/src/rate-limit.ts`; nothing calling it needs to change.
 - **Split staging and production into separate Supabase projects** once real paying users exist. Vercel preview deploys are fine while testing against beta testers; you don't want engineers pointed at real users' pain/injury data during routine testing once there's real liability exposure.
 - **Fresh production database at launch, with optional selective migration.** Beta's Supabase project is treated as disposable — real launch starts on a clean database so Success Metrics aren't diluted by pre-fix bugs, and real customers consent under the actual counsel-reviewed ToS from day one, not whatever was live during beta. If specific beta testers are worth keeping (most engaged, best bug reports), migrate those accounts manually and individually rather than carrying the whole cohort forward — use `signup_cohort` to identify candidates.
 - **Admin panel matures into role-based tooling** — support vs. engineering vs. a future clinical reviewer role — plus an audit log of every manual override (who paused which user, when, why). This becomes a compliance artifact once you're operating at real scale, not just a debugging convenience.

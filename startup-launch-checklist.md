@@ -47,7 +47,8 @@ sub-sections: checklist (broad coverage), the 20-holes audit (specific,
 common vulnerabilities), then the targeted prompt pack (deeper, narrower
 issues). All three are now audited (B1 2026-08-15, B2/B3 2026-08-16) —
 see each sub-section for status and the few remaining non-code follow-ups
-(Clerk Dashboard settings, deliberately-deferred rate limiting).
+(Clerk Dashboard settings, mostly). Rate limiting (B2 #5) was implemented
+2026-08-22, reversing the earlier deferral — see that item for detail.
 
 ### B1. Pre-Launch Security Checklist — mostly reviewed 2026-08-15
 
@@ -59,7 +60,7 @@ Source: "20 things to have Claude do before launching your app."
 3. Use a public/anon DB key only where appropriate — never expose service-role/admin keys to the client — N/A, no Supabase client SDK is used at all; DB access is server-only Prisma over `DATABASE_URL`/`DATABASE_URL_RLS`
 
 **Data Access Control**
-4. Enable row-level security (RLS) on your database — ✅ done pre-existing, `packages/db/sql/rls-policies.sql`
+4. Enable row-level security (RLS) on your database — ✅ done pre-existing, `packages/db/sql/rls-policies.sql`. **Coverage is now CI-enforced** (2026-08-22): `pnpm check:rls` fails the build if any `schema.prisma` table has no recorded RLS decision — added after finding `preset_slots` had silently regressed to zero RLS (same class of gap as a 2026-08-19 Supabase-linter fix — see `HANDOFF.md`'s "Supabase security fix" session — just on a table added after that fix). A real cross-user isolation test also now runs against the live DB (`packages/db/src/__tests__/rls-isolation.test.ts`) — previously nothing automated actually proved RLS blocks a cross-user read/write, only that the policy file looked right on inspection.
 5. Encrypt sensitive data at rest — ✅ Supabase-managed Postgres, encrypted by default
 6. Enforce server-side auth (never trust client-side auth checks alone) — ✅ `protectedProcedure`/`adminProcedure` in `packages/api/src/trpc.ts`
 7. Lock down record access (users can only read/write their own data) — ✅ every query scoped to `ctx.userId`, plus RLS as defense-in-depth
@@ -79,7 +80,7 @@ Source: "20 things to have Claude do before launching your app."
 
 **Infrastructure**
 17. Trim API responses (don't leak internal fields/extra data to the client) — ✅ Done 2026-08-15 — `admin.flaggedUsers` (`packages/api/src/routers/admin.ts`) now uses an explicit `select` instead of returning full `User` rows
-18. Add security headers (CSP, X-Frame-Options, HSTS, etc.) — ✅ Done 2026-08-15 — `apps/web/next.config.ts` `headers()`; also fixed a wide-open CORS wildcard (`Access-Control-Allow-Origin: *`) in `apps/web/src/app/api/trpc/[trpc]/route.ts`, now origin-allowlisted via `ALLOWED_ORIGINS`
+18. Add security headers (CSP, X-Frame-Options, HSTS, etc.) — ✅ Done 2026-08-15 — `apps/web/next.config.ts` `headers()`; also fixed a wide-open CORS wildcard (`Access-Control-Allow-Origin: *`) in the API route, now origin-allowlisted via `ALLOWED_ORIGINS` (`apps/web/src/lib/rest/with-cors.ts` post-REST-migration). **CSP upgraded 2026-08-22** — moved from a static header (`next.config.ts`, `'unsafe-inline' 'unsafe-eval'` unconditionally in `script-src`, which made it close to decorative against XSS) to a per-request nonce generated in `apps/web/src/proxy.ts`. `'unsafe-eval'` is now dev-only; `'unsafe-inline'` stays only as a CSP2 fallback that modern browsers ignore once the nonce is present. Verified live against a running dev server (header nonce matches the nonce stamped on rendered `<script>` tags, differs across requests). Deliberately does **not** use `'strict-dynamic'` — testing found Clerk's own script loads without a nonce, so `'strict-dynamic'` would have broken sign-in in any CSP3 browser; the host allowlist plus the nonce do the job instead. Still open: the allowlist only covers Clerk's Development domain, needs the Production one added at Clerk cutover time.
 19. Force HTTPS everywhere — ✅ Done 2026-08-15 — explicit HSTS header added (Vercel already enforced HTTPS at the platform level)
 20. Scan dependencies for known vulnerabilities (npm audit / equivalent) — ✅ Done 2026-08-15 — `.github/dependabot.yml` added (weekly, npm ecosystem covers pnpm)
 
@@ -103,7 +104,7 @@ to check, especially now that webhooks (Clerk account-deletion) exist.
 | 2 | Real API keys in frontend code | Anything in the JS bundle ships to the browser; `NEXT_PUBLIC_`/`EXPO_PUBLIC_` prefixes mean public | Only publishable keys go client-side; real keys live in edge functions or backend | ✅ Covered by B1 #1 |
 | 3 | Row level security (RLS) off | With RLS disabled, the anon key becomes a master key to read/write every user's rows | RLS on by default, policies scoped to `auth.uid()`, tested with a second account | ✅ Covered by B1 #4 |
 | 4 | Permission checks done in the frontend | `if (user.isAdmin)` in React stops nobody — users can edit responses or call the API directly | Every permission check runs server-side; frontend only decides what to show | ✅ Covered by B1 #6/#7 |
-| 5 | No rate limiting on endpoints | Scripts can brute-force logins or run up AI/API bills overnight | Per-user and per-IP throttles on login, signup, and expensive routes | Partial, deliberately deferred — delegated to Clerk for auth; no rate limiting on AI-calling routes (`onboarding.submit`, Flow B cron) yet. Per the PRD's System Design notes, explicitly fine to defer until beta opens beyond a small invited/trusted cohort |
+| 5 | No rate limiting on endpoints | Scripts can brute-force logins or run up AI/API bills overnight | Per-user and per-IP throttles on login, signup, and expensive routes | ✅ Implemented 2026-08-22 — login throttling still delegated to Clerk (unchanged), but every `/api/v1` route now has a Postgres-backed limiter (`packages/api/src/rate-limit.ts`, applied via `apps/web/src/lib/rest/with-rate-limit.ts`): onboarding 5/hr, admin-triggered LLM work 30/hr, mutations 60/min, reads 300/min, anonymous/IP-keyed 20/min. Atomic under concurrency (verified with 10 parallel requests against the live DB, exactly 5 allowed), fails open on a DB error (advisory, not the last line of defense — RLS is). The PRD's original "defer until beta opens beyond a trusted cohort" call was reversed early after a security review; see `HANDOFF.md`'s 2026-08-22 session for the full writeup, including a real operational finding (Supabase's connection pooler caps at 15 clients) surfaced while testing it |
 | 6 | SQL built via string concatenation | Splicing user input into a query string allows query injection | Parameterized queries or an ORM — never string-interpolated queries | ✅ Covered by B1 #13 |
 | 7 | No server-side input validation | Client-side form validation is skippable — anyone can POST directly to the endpoint | Validate and sanitize on the server too, with a schema library like Zod | ✅ Covered by B1 #14 |
 | 8 | User content rendered as raw HTML | `dangerouslySetInnerHTML` on user text allows script injection (XSS) that steals sessions | Render user content as text; if HTML is required, sanitize with DOMPurify | ✅ Covered by B1 #15 |
@@ -327,8 +328,12 @@ For a pre-launch app, a reasonable order is:
 2. **Category B (Security)** — do this fully before any real users touch
    the app. This is the highest-stakes category. B1/B2/B3 are all fully
    audited and closed out (2026-08-15/16/17), including every manual
-   Clerk Dashboard follow-up. Only deliberately-deferred rate limiting
-   remains, plus the separate Clerk Production-instance cutover decision.
+   Clerk Dashboard follow-up. Rate limiting (B2 #5) shipped 2026-08-22,
+   along with an RLS coverage gap fix + CI enforcement and a CSP upgrade
+   to per-request nonces (see B1 #4/#18 above). What remains: the separate
+   Clerk Production-instance cutover decision, and re-confirming this
+   whole category's Clerk Dashboard settings on that Production instance
+   once it exists.
 3. **Category D (Performance)** — worth doing once core features are
    stable, before you have real traffic to break. Still fully unstarted.
 4. **Category C (UX Polish)** — a targeted pass (loading/success/error

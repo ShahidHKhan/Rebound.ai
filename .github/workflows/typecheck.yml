@@ -1,4 +1,4 @@
-name: Typecheck
+name: CI
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
     branches: [dev, stage, main]
 
 jobs:
-  typecheck:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,3 +47,22 @@ jobs:
         run: npx next typegen
 
       - run: pnpm typecheck
+
+      # Every Prisma model must have an explicit RLS decision recorded in
+      # packages/db/sql/rls-policies.sql. On Supabase an RLS-disabled table is
+      # readable through the auto-generated PostgREST API, so a new model that
+      # silently ships without a policy is a live data-exposure bug rather than
+      # a style issue — `preset_slots` had regressed exactly that way. Pure
+      # file parsing, so it needs no database.
+      - name: Check RLS policy coverage
+        run: pnpm check:rls
+
+      # Unit suites (clinical-rules) run everywhere. The RLS isolation suite in
+      # packages/db needs a real database and skips itself when these secrets
+      # are absent, so forks and secret-less runs stay green instead of failing
+      # on something they cannot execute.
+      - name: Tests
+        run: pnpm test
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_RLS: ${{ secrets.DATABASE_URL_RLS }}

@@ -1,5 +1,6 @@
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 
@@ -34,12 +35,26 @@ export const metadata: Metadata = {
     "An AI-adjusted daily exercise plan that keeps you moving toward your next PR instead of sidelined by pain.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Async because of headers() below. Reading a request header opts the tree out
+// of static generation, which is unavoidable with nonce-based CSP — a nonce is
+// per-request by definition, and a prerendered page has no request to derive
+// one from.
+//
+// Verified this costs nothing here: a build with this layout reverted marks
+// /about, /pricing, /privacy and /terms as dynamic anyway, because
+// ClerkProvider wrapping the root already opted every route in. There were no
+// statically generated pages left to lose.
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Set by src/proxy.ts. Absent only if a route somehow renders outside that
+  // matcher — passing undefined then is correct, and simply yields no nonce
+  // attribute rather than an invalid empty one.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
-    <ClerkProvider>
+    <ClerkProvider nonce={nonce}>
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
         <head>
-          <script dangerouslySetInnerHTML={{ __html: largeTextInitScript }} />
+          <script nonce={nonce} dangerouslySetInnerHTML={{ __html: largeTextInitScript }} />
         </head>
         <body>
           <header

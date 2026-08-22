@@ -15,12 +15,16 @@ import type {
   TriggerTestRunInput,
 } from "@rebound/contracts";
 
-import type { Prisma, PrismaClient } from "@rebound/db";
+import type { Prisma, UnscopedPrismaClient } from "@rebound/db";
 
 import { adjustmentFixtureSchema, onboardingSubmissionSchema } from "../schemas";
 import { ApiError } from "../errors";
 
-type Ctx = { prisma: PrismaClient; userId: string };
+// UnscopedPrismaClient, not PrismaClient: these handlers run behind
+// withAdminOnlyAuth, which is the one authenticated path with no RLS
+// transaction behind it. The narrowed type means reaching for a user-owned
+// table here fails to compile. See prismaUnscoped in packages/db/src/index.ts.
+type Ctx = { prisma: UnscopedPrismaClient; userId: string };
 
 function isValidModel(model: string): boolean {
   return AVAILABLE_MODELS.some((m) => m.id === model);
@@ -47,7 +51,7 @@ const testRunInclude = { llmCalls: { orderBy: { sequenceIndex: "asc" as const } 
 // A TestRun's resultJson only carries exerciseIds — hydrates real
 // names/categories for display, without ever storing them denormalized.
 async function hydrateExerciseNames(
-  prisma: PrismaClient,
+  prisma: UnscopedPrismaClient,
   resultJson: unknown
 ): Promise<Record<string, { name: string; category: string }>> {
   const draft =
