@@ -1,4 +1,4 @@
-import { prisma, prismaRls, type Prisma, type PrismaClient } from "@rebound/db";
+import { prisma, prismaRls, prismaUnscoped, type Prisma, type UnscopedPrismaClient } from "@rebound/db";
 
 import { ApiError } from "./errors";
 
@@ -25,11 +25,11 @@ export async function withTestCtx<T>(
 // tables (LlmCall/TestFixture/TestRun/Scenario).
 export async function withTestAdminOnlyCtx<T>(
   userId: string,
-  fn: (ctx: { prisma: PrismaClient; userId: string }) => Promise<T>
+  fn: (ctx: { prisma: UnscopedPrismaClient; userId: string }) => Promise<T>
 ): Promise<T> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (user?.role !== "ADMIN") {
     throw new ApiError("FORBIDDEN");
   }
-  return fn({ prisma, userId });
+  return fn({ prisma: prismaUnscoped, userId });
 }

@@ -120,6 +120,18 @@ ALTER TABLE preset_exercises ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS preset_exercises_public_read ON preset_exercises;
 CREATE POLICY preset_exercises_public_read ON preset_exercises FOR SELECT USING (true);
 
+-- preset_slots: same shared-library category as presets/preset_exercises —
+-- the slot templates packages/agents/src/skeleton-retrieval.ts narrows
+-- search_exercises against. This table was missing from this file entirely
+-- until 2026-08-22, which meant RLS was never enabled on it and it sat
+-- exposed through Supabase's auto-generated PostgREST API — the exact gap
+-- the header comment describes for the other non-user tables. Found by
+-- packages/db/scripts/check-rls-coverage.ts, which now runs in CI so a new
+-- Prisma model can never again ship without a decision recorded here.
+ALTER TABLE preset_slots ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS preset_slots_public_read ON preset_slots;
+CREATE POLICY preset_slots_public_read ON preset_slots FOR SELECT USING (true);
+
 -- llm_calls / test_fixtures / test_runs / scenarios: internal admin-only
 -- data (packages/api/src/routers/admin-experiments.ts's `adminOnlyProcedure`
 -- deliberately uses the privileged `prisma` client, not `prismaRls` — see
@@ -133,3 +145,11 @@ ALTER TABLE llm_calls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE test_fixtures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE test_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scenarios ENABLE ROW LEVEL SECURITY;
+
+-- rate_limits: counters keyed by user id or client IP
+-- (packages/api/src/rate-limit.ts). Written only by the privileged client,
+-- before any RLS transaction is opened, so `rebound_app` has no legitimate
+-- reason to touch it — same zero-policy default-deny as llm_calls above.
+-- Left unlisted, it would expose per-user request patterns through
+-- PostgREST.
+ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;

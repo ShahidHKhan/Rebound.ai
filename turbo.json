@@ -26,8 +26,11 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": ["DATABASE_URL", "DATABASE_URL_RLS"]
     },
+    "check:rls": {},
     "generate": {
       "cache": false,
       "dependsOn": ["^generate"]
