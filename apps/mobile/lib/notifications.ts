@@ -1,10 +1,9 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import type { components } from "./rest/schema";
 
-export type TodayData = inferRouterOutputs<AppRouter>["workoutSession"]["today"];
+export type TodayData = components["schemas"]["WorkoutSessionToday"];
 type Session = TodayData["sessions"][number];
 
 const CHANNEL_ID = "daily-sessions";
@@ -86,7 +85,12 @@ export async function syncDailyNotifications(sessions: Session[]): Promise<void>
       const session = sessions.find((s) => s.slot === slot);
       if (!session) continue;
 
-      const when = nextOccurrence(session.scheduledAt, session.completedAt, now);
+      // scheduledAt/completedAt cross the wire as ISO strings now (REST, no
+      // superjson) — parsed here, at the one point they're consumed, rather
+      // than threading Date objects through the whole component tree.
+      const scheduledAt = new Date(session.scheduledAt);
+      const completedAt = session.completedAt ? new Date(session.completedAt) : null;
+      const when = nextOccurrence(scheduledAt, completedAt, now);
       const { title, body } = COPY[slot];
 
       await Notifications.scheduleNotificationAsync({

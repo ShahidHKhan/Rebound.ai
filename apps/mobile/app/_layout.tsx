@@ -4,7 +4,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AccessibilityProvider } from "../lib/accessibility";
 import { tokenCache } from "../lib/clerk-token-cache";
-import { TRPCProvider } from "../lib/trpc";
+import { ApiProvider } from "../lib/rest/ApiProvider";
+import { QueryProvider } from "../lib/rest/QueryProvider";
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -20,9 +21,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AccessibilityProvider>
         <ClerkProvider tokenCache={tokenCache} publishableKey={CLERK_PUBLISHABLE_KEY}>
-          <TRPCProvider>
-            <Slot />
-          </TRPCProvider>
+          <ApiProvider>
+            <QueryProvider>
+              <Slot />
+            </QueryProvider>
+          </ApiProvider>
         </ClerkProvider>
       </AccessibilityProvider>
     </SafeAreaProvider>

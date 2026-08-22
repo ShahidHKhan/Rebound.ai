@@ -1,8 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
@@ -14,7 +17,10 @@ const cardStyle: React.CSSProperties = {
 };
 
 export default function MilestonesPage() {
-  const milestones = trpc.progress.milestones.useQuery();
+  const milestones = useQuery({
+    queryKey: qk.milestones(),
+    queryFn: async () => unwrap(await api.GET("/progress/milestones")),
+  });
 
   return (
     <main style={pageStyle}>

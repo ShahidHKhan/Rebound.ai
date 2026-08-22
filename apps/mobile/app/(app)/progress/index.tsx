@@ -1,14 +1,15 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
-import type { inferRouterOutputs } from "@trpc/server";
-
-import type { AppRouter } from "@rebound/api";
 
 import { Button } from "../../../components/Button";
-import { trpc } from "../../../lib/trpc";
+import { unwrap } from "../../../lib/rest/api-error";
+import { useApi } from "../../../lib/rest/ApiProvider";
+import { qk } from "../../../lib/rest/query-keys";
+import type { components } from "../../../lib/rest/schema";
 import { useSharedStyles } from "../../../lib/styles";
 
-type Summary = inferRouterOutputs<AppRouter>["progress"]["summary"];
+type Summary = components["schemas"]["ProgressSummary"];
 type PainPoint = Summary["painTrend"][number];
 
 const CHART_HEIGHT = 100;
@@ -71,7 +72,11 @@ function PainTrendBars({ painTrend }: { painTrend: PainPoint[] }) {
 export default function ProgressScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
-  const summary = trpc.progress.summary.useQuery();
+  const api = useApi();
+  const summary = useQuery({
+    queryKey: qk.progressSummary(),
+    queryFn: async () => unwrap(await api.GET("/progress/summary")),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

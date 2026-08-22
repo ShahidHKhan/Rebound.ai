@@ -1,9 +1,12 @@
 import { useUser } from "@clerk/clerk-expo";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { Button } from "../../components/Button";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
+import { qk } from "../../lib/rest/query-keys";
 import { useSharedStyles } from "../../lib/styles";
 
 const goalTypeLabels: Record<string, string> = {
@@ -17,7 +20,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
   const { user, isLoaded: userLoaded } = useUser();
-  const me = trpc.user.getMe.useQuery();
+  const api = useApi();
+  const me = useQuery({
+    queryKey: qk.me(),
+    queryFn: async () => unwrap(await api.GET("/users/me")),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

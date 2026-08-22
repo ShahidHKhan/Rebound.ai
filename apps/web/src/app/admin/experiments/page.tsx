@@ -1,15 +1,16 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
+import type { components } from "@/lib/rest/schema";
 
-import { trpc } from "@/lib/trpc/client";
-
-type RunDetail = inferRouterOutputs<AppRouter>["adminExperiments"]["testRuns"]["getById"];
-type LlmCallRow = RunDetail["llmCalls"][number];
+type RunDetail = components["schemas"]["TestRunDetail"];
+type LlmCallRow = components["schemas"]["LlmCall"];
 type FixtureType = "ONBOARDING" | "ADJUSTMENT";
 
 const pageStyle: React.CSSProperties = { maxWidth: 1000, margin: "0 auto", padding: "2rem" };
@@ -217,7 +218,10 @@ function RunResultView({ run }: { run: RunDetail }) {
 }
 
 function RunDetailById({ runId }: { runId: string }) {
-  const runQuery = trpc.adminExperiments.testRuns.getById.useQuery({ id: runId });
+  const runQuery = useQuery({
+    queryKey: qk.adminTestRun(runId),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/test-runs/{id}", { params: { path: { id: runId } } })),
+  });
 
   if (runQuery.isLoading) {
     return (
@@ -237,9 +241,15 @@ function RunDetailById({ runId }: { runId: string }) {
 }
 
 function FixturesAndRunner() {
-  const utils = trpc.useUtils();
-  const fixturesQuery = trpc.adminExperiments.fixtures.list.useQuery();
-  const modelsQuery = trpc.adminExperiments.availableModels.useQuery();
+  const queryClient = useQueryClient();
+  const fixturesQuery = useQuery({
+    queryKey: qk.adminFixtures(),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/fixtures")),
+  });
+  const modelsQuery = useQuery({
+    queryKey: qk.adminModels(),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/models")),
+  });
 
   const [selectedFixtureId, setSelectedFixtureId] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
@@ -251,23 +261,30 @@ function FixturesAndRunner() {
   const [newFixturePayload, setNewFixturePayload] = useState(EXAMPLE_PAYLOAD.ONBOARDING);
   const [payloadError, setPayloadError] = useState<string | null>(null);
 
-  const createFixture = trpc.adminExperiments.fixtures.create.useMutation({
+  const createFixture = useMutation({
+    mutationFn: async (input: { name: string; type: FixtureType; payload: unknown }) =>
+      unwrap(await api.POST("/admin/experiments/fixtures", { body: input })),
     onSuccess: () => {
-      utils.adminExperiments.fixtures.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: qk.adminFixtures() });
       setNewFixtureOpen(false);
       setNewFixtureName("");
     },
     onError: (error) => setPayloadError(error.message),
   });
 
-  const triggerRun = trpc.adminExperiments.testRuns.trigger.useMutation({
+  const triggerRun = useMutation({
+    mutationFn: async (input: { fixtureId: string; model: string }) =>
+      unwrap(await api.POST("/admin/experiments/test-runs", { body: input })),
     onSuccess: (data) => {
       setViewedRunId(data.id);
-      utils.adminExperiments.testRuns.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: qk.adminTestRuns() });
     },
   });
 
-  const runHistory = trpc.adminExperiments.testRuns.list.useQuery();
+  const runHistory = useQuery({
+    queryKey: qk.adminTestRuns(),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/test-runs")),
+  });
 
   function handleCreateFixture() {
     setPayloadError(null);
@@ -475,10 +492,20 @@ function LlmCallsLog() {
   const [flow, setFlow] = useState<string>("");
   const [source, setSource] = useState<string>("");
 
-  const callsQuery = trpc.adminExperiments.llmCalls.list.useQuery({
-    flow: (flow || undefined) as never,
-    source: (source || undefined) as never,
-    limit: 50,
+  const callsQuery = useQuery({
+    queryKey: qk.adminLlmCalls(flow, source),
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/admin/experiments/llm-calls", {
+          params: {
+            query: {
+              flow: (flow || undefined) as never,
+              source: (source || undefined) as never,
+              limit: 50,
+            },
+          },
+        })
+      ),
   });
 
   return (

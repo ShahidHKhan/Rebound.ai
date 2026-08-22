@@ -1,9 +1,11 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -14,7 +16,15 @@ const cardStyle: React.CSSProperties = {
 };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
 
-const reasonOptions: { value: string; label: string }[] = [
+type ReasonCode =
+  | "TOO_EXPENSIVE"
+  | "NOT_SEEING_RESULTS"
+  | "PLAN_TOO_DEMANDING"
+  | "PLAN_TOO_EASY"
+  | "TECHNICAL_ISSUES"
+  | "OTHER";
+
+const reasonOptions: { value: ReasonCode; label: string }[] = [
   { value: "TOO_EXPENSIVE", label: "Too expensive" },
   { value: "NOT_SEEING_RESULTS", label: "Not seeing results" },
   { value: "PLAN_TOO_DEMANDING", label: "Plan is too demanding" },
@@ -27,7 +37,10 @@ export default function CancelPage() {
   const [reasonCode, setReasonCode] = useState("");
   const [comment, setComment] = useState("");
 
-  const submitFeedback = trpc.user.submitCancellationFeedback.useMutation();
+  const submitFeedback = useMutation({
+    mutationFn: async (input: { reasonCode: ReasonCode; comment?: string }) =>
+      unwrap(await api.POST("/users/me/cancellation-feedback", { body: input })),
+  });
 
   return (
     <main style={pageStyle}>
@@ -62,13 +75,7 @@ export default function CancelPage() {
             e.preventDefault();
             if (!reasonCode) return;
             submitFeedback.mutate({
-              reasonCode: reasonCode as
-                | "TOO_EXPENSIVE"
-                | "NOT_SEEING_RESULTS"
-                | "PLAN_TOO_DEMANDING"
-                | "PLAN_TOO_EASY"
-                | "TECHNICAL_ISSUES"
-                | "OTHER",
+              reasonCode: reasonCode as ReasonCode,
               comment: comment.trim() === "" ? undefined : comment.trim(),
             });
           }}

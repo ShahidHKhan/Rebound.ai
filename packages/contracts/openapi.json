@@ -1,0 +1,3763 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Rebound.ai API",
+    "version": "1.0.0",
+    "description": "Generated from packages/contracts/src/schemas/**. Do not hand-edit — run `pnpm --filter @rebound/contracts generate` after changing a schema."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-21T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "ok",
+          "timestamp"
+        ]
+      },
+      "ExerciseMedia": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Exercise": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "MOBILITY",
+              "STRENGTH",
+              "STRETCH"
+            ]
+          },
+          "targetMuscleGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficultyLevel": {
+            "type": "integer"
+          },
+          "equipment": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "BODY_ONLY",
+              "MACHINE",
+              "OTHER",
+              "FOAM_ROLL",
+              "KETTLEBELLS",
+              "DUMBBELL",
+              "CABLE",
+              "BARBELL",
+              "BANDS",
+              "MEDICINE_BALL",
+              "EXERCISE_BALL",
+              "EZ_CURL_BAR"
+            ]
+          },
+          "contraindications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "progressionGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "media": {
+            "$ref": "#/components/schemas/ExerciseMedia"
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "targetMuscleGroups",
+          "difficultyLevel",
+          "equipment",
+          "contraindications",
+          "progressionGroup",
+          "media",
+          "source",
+          "externalId"
+        ]
+      },
+      "GetMeResponse": {
+        "type": "object",
+        "properties": {
+          "goalType": {
+            "type": "string",
+            "enum": [
+              "INJURY_RECOVERY",
+              "STRENGTH",
+              "MOBILITY",
+              "GENERAL_FITNESS"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "wakeTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "eveningTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "trialActive": {
+                "type": "boolean"
+              },
+              "firstAdjustmentAt": {
+                "type": "string",
+                "nullable": true,
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "trialActive",
+              "firstAdjustmentAt"
+            ]
+          }
+        },
+        "required": [
+          "goalType",
+          "createdAt",
+          "wakeTimeMinutes",
+          "eveningTimeMinutes",
+          "billing"
+        ]
+      },
+      "SubmitCancellationFeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "received"
+        ]
+      },
+      "NotificationTimes": {
+        "type": "object",
+        "properties": {
+          "wakeTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "eveningTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "wakeTimeMinutes",
+          "eveningTimeMinutes"
+        ]
+      },
+      "DeleteMyAccountResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "OnboardingSubmitCrisisResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "crisis_detected"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "reasons"
+        ]
+      },
+      "OnboardingSubmitRedFlaggedResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "red_flagged"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "reasons"
+        ]
+      },
+      "OnboardingSubmitCooldownResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "cooldown_active"
+            ]
+          },
+          "regimeCreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "status",
+          "regimeCreatedAt"
+        ]
+      },
+      "OnboardingSubmitJobCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "job_created"
+            ]
+          },
+          "jobId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "jobId"
+        ]
+      },
+      "OnboardingJobStatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "COMPLETE",
+              "FAILED"
+            ]
+          },
+          "resultRegimeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "resultRegimeId",
+          "createdAt",
+          "completedAt"
+        ]
+      },
+      "Regime": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "enum": [
+              "AGENT",
+              "USER_EDITED",
+              "PRESET_FALLBACK"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "SUPERSEDED",
+              "ENDED"
+            ]
+          },
+          "endReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePresetId": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePreset": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              },
+              "riskTier": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "GENERAL",
+                  "LIGHT_INJURY",
+                  "HEAVIER_CHRONIC_ELDERLY"
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "FALLBACK",
+                  "SKELETON"
+                ]
+              },
+              "goalType": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "INJURY_RECOVERY",
+                  "STRENGTH",
+                  "MOBILITY",
+                  "GENERAL_FITNESS"
+                ]
+              },
+              "bodyRegionTags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "presetId": {
+                      "type": "string"
+                    },
+                    "sessionSlot": {
+                      "type": "string",
+                      "enum": [
+                        "MORNING",
+                        "EVENING"
+                      ]
+                    },
+                    "orderIndex": {
+                      "type": "integer"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "exerciseCategory": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "MOBILITY",
+                        "STRENGTH",
+                        "STRETCH"
+                      ]
+                    },
+                    "muscleGroupTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "maxDifficulty": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedSets": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedReps": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedDurationSeconds": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedFrequency": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rationale": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "presetId",
+                    "sessionSlot",
+                    "orderIndex",
+                    "label",
+                    "exerciseCategory",
+                    "muscleGroupTags",
+                    "maxDifficulty",
+                    "suggestedSets",
+                    "suggestedReps",
+                    "suggestedDurationSeconds",
+                    "suggestedFrequency",
+                    "rationale"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "riskTier",
+              "createdAt",
+              "kind",
+              "goalType",
+              "bodyRegionTags",
+              "slots"
+            ]
+          },
+          "parentRegimeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "exerciseList": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "regimeId": {
+                  "type": "string"
+                },
+                "exerciseId": {
+                  "type": "string"
+                },
+                "sets": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "reps": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "durationSeconds": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "frequency": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "sessionSlot": {
+                  "type": "string",
+                  "enum": [
+                    "MORNING",
+                    "EVENING"
+                  ]
+                },
+                "orderIndex": {
+                  "type": "integer"
+                },
+                "exercise": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              },
+              "required": [
+                "id",
+                "regimeId",
+                "exerciseId",
+                "sets",
+                "reps",
+                "durationSeconds",
+                "frequency",
+                "sessionSlot",
+                "orderIndex",
+                "exercise"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "versionNumber",
+          "createdAt",
+          "createdBy",
+          "status",
+          "endReason",
+          "sourcePresetId",
+          "sourcePreset",
+          "parentRegimeId",
+          "exerciseList"
+        ]
+      },
+      "ActivateRegimeResponse": {
+        "type": "object",
+        "properties": {
+          "regimeId": {
+            "type": "string"
+          },
+          "exerciseCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "regimeId",
+          "exerciseCount"
+        ]
+      },
+      "RestartRegimeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "SessionLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "regimeVersionId": {
+            "type": "string"
+          },
+          "loggedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "painScore": {
+            "type": "integer"
+          },
+          "mobilityStrengthIndicator": {
+            "nullable": true
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "perceivedExertion": {
+            "type": "integer",
+            "nullable": true
+          },
+          "flag": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "regimeVersionId",
+          "loggedAt",
+          "painScore",
+          "completed",
+          "perceivedExertion",
+          "flag"
+        ]
+      },
+      "SessionLogs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SessionLog"
+        }
+      },
+      "CreateSessionLogResponse": {
+        "type": "object",
+        "properties": {
+          "sessionLogId": {
+            "type": "string"
+          },
+          "escalation": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "hold",
+                  "flag_for_review",
+                  "rollback"
+                ]
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "action",
+              "reasons"
+            ]
+          }
+        },
+        "required": [
+          "sessionLogId",
+          "escalation"
+        ]
+      },
+      "WorkoutSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "regimeVersionId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slot": {
+            "type": "string",
+            "enum": [
+              "MORNING",
+              "EVENING"
+            ]
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "regimeVersionId",
+          "date",
+          "slot",
+          "scheduledAt",
+          "completedAt"
+        ]
+      },
+      "WorkoutSessionToday": {
+        "type": "object",
+        "properties": {
+          "regime": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "userId": {
+                "type": "string"
+              },
+              "versionNumber": {
+                "type": "integer"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "createdBy": {
+                "type": "string",
+                "enum": [
+                  "AGENT",
+                  "USER_EDITED",
+                  "PRESET_FALLBACK"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "DRAFT",
+                  "ACTIVE",
+                  "SUPERSEDED",
+                  "ENDED"
+                ]
+              },
+              "endReason": {
+                "type": "string",
+                "nullable": true
+              },
+              "sourcePresetId": {
+                "type": "string",
+                "nullable": true
+              },
+              "parentRegimeId": {
+                "type": "string",
+                "nullable": true
+              },
+              "exerciseList": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "regimeId": {
+                      "type": "string"
+                    },
+                    "exerciseId": {
+                      "type": "string"
+                    },
+                    "sets": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "reps": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "durationSeconds": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "frequency": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "sessionSlot": {
+                      "type": "string",
+                      "enum": [
+                        "MORNING",
+                        "EVENING"
+                      ]
+                    },
+                    "orderIndex": {
+                      "type": "integer"
+                    },
+                    "exercise": {
+                      "$ref": "#/components/schemas/Exercise"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "regimeId",
+                    "exerciseId",
+                    "sets",
+                    "reps",
+                    "durationSeconds",
+                    "frequency",
+                    "sessionSlot",
+                    "orderIndex",
+                    "exercise"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "userId",
+              "versionNumber",
+              "createdAt",
+              "createdBy",
+              "status",
+              "endReason",
+              "sourcePresetId",
+              "parentRegimeId",
+              "exerciseList"
+            ]
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkoutSession"
+            }
+          },
+          "todaysLog": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionLog"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "streak": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "regime",
+          "sessions",
+          "todaysLog",
+          "streak"
+        ]
+      },
+      "CompleteWorkoutSessionResponse": {
+        "type": "object",
+        "properties": {
+          "workoutSessionId": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "workoutSessionId",
+          "completedAt"
+        ]
+      },
+      "ProgressSummary": {
+        "type": "object",
+        "properties": {
+          "painTrend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "painScore": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "painScore"
+              ]
+            }
+          },
+          "adherencePct": {
+            "type": "integer",
+            "nullable": true
+          },
+          "completedSessions": {
+            "type": "integer"
+          },
+          "totalSessions": {
+            "type": "integer"
+          },
+          "weeksActive": {
+            "type": "integer"
+          },
+          "streak": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "painTrend",
+          "adherencePct",
+          "completedSessions",
+          "totalSessions",
+          "weeksActive",
+          "streak"
+        ]
+      },
+      "StreakCalendar": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "completed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "date",
+                "completed"
+              ]
+            }
+          },
+          "streak": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "streak"
+        ]
+      },
+      "Milestones": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "description"
+          ]
+        }
+      },
+      "AdjustmentEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "fromRegimeVersionId": {
+            "type": "string"
+          },
+          "toRegimeVersionId": {
+            "type": "string"
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED_ADJUSTMENT",
+              "ESCALATION_ROLLBACK"
+            ]
+          },
+          "trailingWindowUsed": {
+            "type": "integer"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "wasReversed": {
+            "type": "boolean"
+          },
+          "fromRegime": {
+            "type": "object",
+            "properties": {
+              "versionNumber": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "versionNumber"
+            ]
+          },
+          "toRegime": {
+            "type": "object",
+            "properties": {
+              "versionNumber": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "versionNumber"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "fromRegimeVersionId",
+          "toRegimeVersionId",
+          "triggeredAt",
+          "triggerType",
+          "trailingWindowUsed",
+          "rationale",
+          "wasReversed",
+          "fromRegime",
+          "toRegime"
+        ]
+      },
+      "AdjustmentEvents": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AdjustmentEvent"
+        }
+      },
+      "AdminFlaggedUsers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "user": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "goalType": {
+                  "type": "string",
+                  "enum": [
+                    "INJURY_RECOVERY",
+                    "STRENGTH",
+                    "MOBILITY",
+                    "GENERAL_FITNESS"
+                  ]
+                },
+                "riskTier": {
+                  "type": "string",
+                  "enum": [
+                    "GENERAL",
+                    "LIGHT_INJURY",
+                    "HEAVIER_CHRONIC_ELDERLY"
+                  ]
+                },
+                "manualHold": {
+                  "type": "boolean"
+                },
+                "manualHoldReason": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "goalType",
+                "riskTier",
+                "manualHold",
+                "manualHoldReason",
+                "createdAt"
+              ]
+            },
+            "reasons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "mostRecent": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "user",
+            "reasons",
+            "mostRecent"
+          ]
+        }
+      },
+      "AdminSetManualHoldResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "manualHold": {
+            "type": "boolean"
+          },
+          "manualHoldReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "userId",
+          "manualHold",
+          "manualHoldReason"
+        ]
+      },
+      "AdminMetrics": {
+        "type": "object",
+        "properties": {
+          "activationFunnel": {
+            "type": "object",
+            "properties": {
+              "totalUsers": {
+                "type": "integer"
+              },
+              "regimeGenerated": {
+                "type": "integer"
+              },
+              "regimeActivated": {
+                "type": "integer"
+              },
+              "loggedAtLeastOnce": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "totalUsers",
+              "regimeGenerated",
+              "regimeActivated",
+              "loggedAtLeastOnce"
+            ]
+          },
+          "adverseEvents": {
+            "type": "object",
+            "properties": {
+              "flaggedSessionLogs": {
+                "type": "integer"
+              },
+              "escalationRollbacks": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "flaggedSessionLogs",
+              "escalationRollbacks"
+            ]
+          },
+          "flowFailures": {
+            "type": "object",
+            "properties": {
+              "flowAJobsTotal": {
+                "type": "integer"
+              },
+              "flowAJobsFailed": {
+                "type": "integer"
+              },
+              "flowBScheduledAdjustments": {
+                "type": "integer"
+              },
+              "flowBScheduledHolds": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "flowAJobsTotal",
+              "flowAJobsFailed",
+              "flowBScheduledAdjustments",
+              "flowBScheduledHolds"
+            ]
+          },
+          "reversalRate": {
+            "type": "object",
+            "properties": {
+              "totalAdjustmentEvents": {
+                "type": "integer"
+              },
+              "markedReversed": {
+                "type": "integer"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "totalAdjustmentEvents",
+              "markedReversed",
+              "note"
+            ]
+          }
+        },
+        "required": [
+          "activationFunnel",
+          "adverseEvents",
+          "flowFailures",
+          "reversalRate"
+        ]
+      },
+      "AvailableModels": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "inputPerMTok": {
+              "type": "number"
+            },
+            "outputPerMTok": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "inputPerMTok",
+            "outputPerMTok"
+          ]
+        }
+      },
+      "TestFixture": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "ONBOARDING",
+              "ADJUSTMENT"
+            ]
+          },
+          "payload": {
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "type",
+          "createdAt"
+        ]
+      },
+      "TestFixtures": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TestFixture"
+        }
+      },
+      "DeleteByIdResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "LlmCall": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "flow": {
+            "type": "string",
+            "enum": [
+              "FLOW_A_DRAFT",
+              "FLOW_B_ADJUST",
+              "FREE_TEXT_CLASSIFIER"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "PRODUCTION",
+              "ADMIN_TEST"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "sequenceIndex": {
+            "type": "integer"
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "testRunId": {
+            "type": "string",
+            "nullable": true
+          },
+          "inputTokens": {
+            "type": "integer"
+          },
+          "outputTokens": {
+            "type": "integer"
+          },
+          "latencyMs": {
+            "type": "integer"
+          },
+          "costUsd": {
+            "type": "string",
+            "nullable": true
+          },
+          "stopReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestJson": {
+            "nullable": true
+          },
+          "responseJson": {
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "flow",
+          "source",
+          "model",
+          "groupId",
+          "sequenceIndex",
+          "userId",
+          "testRunId",
+          "inputTokens",
+          "outputTokens",
+          "latencyMs",
+          "costUsd",
+          "stopReason",
+          "success",
+          "errorMessage"
+        ]
+      },
+      "LlmCalls": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LlmCall"
+        }
+      },
+      "TestRunDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fixtureId": {
+            "type": "string",
+            "nullable": true
+          },
+          "flow": {
+            "type": "string",
+            "enum": [
+              "FLOW_A_DRAFT",
+              "FLOW_B_ADJUST",
+              "FREE_TEXT_CLASSIFIER"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "VALID",
+              "INVALID",
+              "ERROR"
+            ]
+          },
+          "resultJson": {
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scenarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "cycleIndex": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inputJson": {
+            "nullable": true
+          },
+          "llmCalls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LlmCall"
+            }
+          },
+          "fixture": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TestFixture"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "exerciseNames": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "category"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "fixtureId",
+          "flow",
+          "model",
+          "status",
+          "createdByUserId",
+          "createdAt",
+          "scenarioId",
+          "cycleIndex",
+          "llmCalls",
+          "fixture",
+          "exerciseNames"
+        ]
+      },
+      "TestRunSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fixtureId": {
+            "type": "string",
+            "nullable": true
+          },
+          "flow": {
+            "type": "string",
+            "enum": [
+              "FLOW_A_DRAFT",
+              "FLOW_B_ADJUST",
+              "FREE_TEXT_CLASSIFIER"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "VALID",
+              "INVALID",
+              "ERROR"
+            ]
+          },
+          "resultJson": {
+            "nullable": true
+          },
+          "createdByUserId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scenarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "cycleIndex": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inputJson": {
+            "nullable": true
+          },
+          "fixture": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "llmCalls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "costUsd": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "costUsd"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "fixtureId",
+          "flow",
+          "model",
+          "status",
+          "createdByUserId",
+          "createdAt",
+          "scenarioId",
+          "cycleIndex",
+          "fixture",
+          "llmCalls"
+        ]
+      },
+      "TestRunSummaries": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TestRunSummary"
+        }
+      },
+      "ScenarioStartResponse": {
+        "type": "object",
+        "properties": {
+          "scenario": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "createdByUserId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "createdAt",
+              "createdByUserId"
+            ]
+          },
+          "testRun": {
+            "$ref": "#/components/schemas/TestRunDetail"
+          }
+        },
+        "required": [
+          "scenario",
+          "testRun"
+        ]
+      },
+      "ScenarioCycleResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TestRunDetail"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "diffFromPrevious": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "exerciseId": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string",
+                      "enum": [
+                        "added",
+                        "removed",
+                        "changed",
+                        "unchanged"
+                      ]
+                    },
+                    "before": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string"
+                        },
+                        "sets": {
+                          "type": "integer"
+                        },
+                        "reps": {
+                          "type": "integer"
+                        },
+                        "durationSeconds": {
+                          "type": "integer"
+                        },
+                        "frequency": {
+                          "type": "string"
+                        },
+                        "sessionSlot": {
+                          "type": "string",
+                          "enum": [
+                            "MORNING",
+                            "EVENING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "sessionSlot"
+                      ]
+                    },
+                    "after": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string"
+                        },
+                        "sets": {
+                          "type": "integer"
+                        },
+                        "reps": {
+                          "type": "integer"
+                        },
+                        "durationSeconds": {
+                          "type": "integer"
+                        },
+                        "frequency": {
+                          "type": "string"
+                        },
+                        "sessionSlot": {
+                          "type": "string",
+                          "enum": [
+                            "MORNING",
+                            "EVENING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "sessionSlot"
+                      ]
+                    },
+                    "changedFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "exerciseId",
+                    "change"
+                  ]
+                }
+              },
+              "diffFromOriginal": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "exerciseId": {
+                      "type": "string"
+                    },
+                    "change": {
+                      "type": "string",
+                      "enum": [
+                        "added",
+                        "removed",
+                        "changed",
+                        "unchanged"
+                      ]
+                    },
+                    "before": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string"
+                        },
+                        "sets": {
+                          "type": "integer"
+                        },
+                        "reps": {
+                          "type": "integer"
+                        },
+                        "durationSeconds": {
+                          "type": "integer"
+                        },
+                        "frequency": {
+                          "type": "string"
+                        },
+                        "sessionSlot": {
+                          "type": "string",
+                          "enum": [
+                            "MORNING",
+                            "EVENING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "sessionSlot"
+                      ]
+                    },
+                    "after": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string"
+                        },
+                        "sets": {
+                          "type": "integer"
+                        },
+                        "reps": {
+                          "type": "integer"
+                        },
+                        "durationSeconds": {
+                          "type": "integer"
+                        },
+                        "frequency": {
+                          "type": "string"
+                        },
+                        "sessionSlot": {
+                          "type": "string",
+                          "enum": [
+                            "MORNING",
+                            "EVENING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "sessionSlot"
+                      ]
+                    },
+                    "changedFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "exerciseId",
+                    "change"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "diffFromPrevious",
+              "diffFromOriginal"
+            ]
+          }
+        ]
+      },
+      "ScenarioSummaries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string",
+              "nullable": true
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "cycleCount": {
+              "type": "integer"
+            },
+            "latestStatus": {
+              "type": "string",
+              "nullable": true,
+              "enum": [
+                "RUNNING",
+                "VALID",
+                "INVALID",
+                "ERROR"
+              ]
+            },
+            "totalCost": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "createdAt",
+            "cycleCount",
+            "latestStatus",
+            "totalCost"
+          ]
+        }
+      },
+      "ScenarioDetailResponse": {
+        "type": "object",
+        "properties": {
+          "scenario": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "createdAt"
+            ]
+          },
+          "cycles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioCycleResponse"
+            }
+          },
+          "painTimeline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "simulatedDay": {
+                  "type": "integer"
+                },
+                "painScore": {
+                  "type": "integer"
+                },
+                "madeItWorseFlag": {
+                  "type": "boolean"
+                },
+                "cycleIndex": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "simulatedDay",
+                "painScore",
+                "madeItWorseFlag",
+                "cycleIndex"
+              ]
+            }
+          }
+        },
+        "required": [
+          "scenario",
+          "cycles",
+          "painTimeline"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness check — no auth required",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exercises/{exerciseId}": {
+      "get": {
+        "tags": [
+          "exercise"
+        ],
+        "summary": "Get a single exercise-library entry by id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "exerciseId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exercise found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No exercise with this id"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get the current user's profile + billing status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Permanently delete the current user's account and app data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteMyAccountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/users/me/cancellation-feedback": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Record a cancellation reason (beta preview — no real subscription exists yet)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasonCode": {
+                    "type": "string",
+                    "enum": [
+                      "TOO_EXPENSIVE",
+                      "NOT_SEEING_RESULTS",
+                      "PLAN_TOO_DEMANDING",
+                      "PLAN_TOO_EASY",
+                      "TECHNICAL_ISSUES",
+                      "OTHER"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reasonCode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitCancellationFeedbackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/users/me/notification-times": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get the current user's wake / evening session times",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTimes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Update the current user's wake / evening session times",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "wakeTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "eveningTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  }
+                },
+                "required": [
+                  "wakeTimeMinutes",
+                  "eveningTimeMinutes"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTimes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/onboarding": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Submit onboarding answers — screens for crisis/red-flag/cooldown, else kicks off async regime generation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "answers": {
+                    "type": "object",
+                    "properties": {
+                      "age": {
+                        "type": "integer",
+                        "minimum": 13,
+                        "maximum": 120
+                      },
+                      "goalType": {
+                        "type": "string",
+                        "enum": [
+                          "INJURY_RECOVERY",
+                          "STRENGTH",
+                          "MOBILITY",
+                          "GENERAL_FITNESS"
+                        ]
+                      },
+                      "conditionFlags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "injurySeverity": {
+                        "type": "string",
+                        "enum": [
+                          "none",
+                          "mild",
+                          "moderate",
+                          "severe"
+                        ]
+                      },
+                      "redFlags": {
+                        "type": "object",
+                        "properties": {
+                          "severeSuddenPain": {
+                            "type": "boolean"
+                          },
+                          "numbnessOrTingling": {
+                            "type": "boolean"
+                          },
+                          "recentTrauma": {
+                            "type": "boolean"
+                          },
+                          "recentSurgery": {
+                            "type": "boolean"
+                          },
+                          "pregnancyRelated": {
+                            "type": "boolean"
+                          },
+                          "cardiacSymptomsWithExertion": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "severeSuddenPain",
+                          "numbnessOrTingling",
+                          "recentTrauma",
+                          "recentSurgery",
+                          "pregnancyRelated",
+                          "cardiacSymptomsWithExertion"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "age",
+                      "goalType",
+                      "conditionFlags",
+                      "injurySeverity",
+                      "redFlags"
+                    ]
+                  },
+                  "targetMovement": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "symptomsText": {
+                    "type": "string",
+                    "maxLength": 750
+                  },
+                  "lifestyleContextText": {
+                    "type": "string",
+                    "maxLength": 750
+                  },
+                  "wakeTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "eveningTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "availableEquipment": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "BODY_ONLY",
+                        "MACHINE",
+                        "OTHER",
+                        "FOAM_ROLL",
+                        "KETTLEBELLS",
+                        "DUMBBELL",
+                        "CABLE",
+                        "BARBELL",
+                        "BANDS",
+                        "MEDICINE_BALL",
+                        "EXERCISE_BALL",
+                        "EZ_CURL_BAR"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "answers",
+                  "targetMovement",
+                  "symptomsText",
+                  "lifestyleContextText"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Always 200 — all four outcomes (crisis_detected/red_flagged/cooldown_active/job_created) are successful screening results, not errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitCrisisResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitRedFlaggedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitCooldownResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OnboardingSubmitJobCreatedResponse"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "status",
+                    "mapping": {
+                      "crisis_detected": "#/components/schemas/OnboardingSubmitCrisisResponse",
+                      "red_flagged": "#/components/schemas/OnboardingSubmitRedFlaggedResponse",
+                      "cooldown_active": "#/components/schemas/OnboardingSubmitCooldownResponse",
+                      "job_created": "#/components/schemas/OnboardingSubmitJobCreatedResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/onboarding/jobs/{jobId}": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Poll a regime-generation job's status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "jobId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingJobStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Job belongs to another user"
+          }
+        }
+      }
+    },
+    "/regimes/{regimeId}": {
+      "get": {
+        "tags": [
+          "regime"
+        ],
+        "summary": "Get a regime by id, with its exercise list and (if present) source preset",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "regimeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Regime"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Regime belongs to another user"
+          },
+          "404": {
+            "description": "No regime with this id"
+          }
+        }
+      }
+    },
+    "/regimes/{regimeId}/activate": {
+      "post": {
+        "tags": [
+          "regime"
+        ],
+        "summary": "Activate a DRAFT regime — optionally with edited exercises, runs structural + clinical validation first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "regimeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "exercises": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string"
+                        },
+                        "sets": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10
+                        },
+                        "reps": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 50
+                        },
+                        "durationSeconds": {
+                          "type": "integer",
+                          "minimum": 5,
+                          "maximum": 1800
+                        },
+                        "frequency": {
+                          "type": "string",
+                          "maxLength": 50
+                        },
+                        "sessionSlot": {
+                          "type": "string",
+                          "enum": [
+                            "MORNING",
+                            "EVENING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "sessionSlot"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivateRegimeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a DRAFT, or failed structural/clinical validation"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Regime belongs to another user"
+          },
+          "404": {
+            "description": "No regime with this id"
+          }
+        }
+      }
+    },
+    "/regimes/restart": {
+      "post": {
+        "tags": [
+          "regime"
+        ],
+        "summary": "End the current user's active regime (self-service 'start over')",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasonCode": {
+                    "type": "string",
+                    "enum": [
+                      "GOALS_CHANGED",
+                      "STARTING_OVER",
+                      "OTHER"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reasonCode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestartRegimeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No active regime to restart"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/session-logs": {
+      "get": {
+        "tags": [
+          "session-log"
+        ],
+        "summary": "List the current user's session logs, most recent first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionLogs"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "session-log"
+        ],
+        "summary": "Log today's pain/exertion check-in — runs the real-time escalation monitor inline",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "painScore": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "flag": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "perceivedExertion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10
+                  }
+                },
+                "required": [
+                  "painScore"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSessionLogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active regime to log against"
+          },
+          "409": {
+            "description": "Already logged today"
+          }
+        }
+      }
+    },
+    "/workout-sessions/today": {
+      "get": {
+        "tags": [
+          "workout-session"
+        ],
+        "summary": "Everything the Today screen needs: active regime, today's sessions, today's log, current streak",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutSessionToday"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/workout-sessions/{id}/complete": {
+      "post": {
+        "tags": [
+          "workout-session"
+        ],
+        "summary": "Mark a workout session complete",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteWorkoutSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Session belongs to another user"
+          },
+          "404": {
+            "description": "No workout session with this id"
+          }
+        }
+      }
+    },
+    "/progress/summary": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Pain trend, adherence %, weeks active, current streak",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/progress/streak-calendar": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Last 60 days, each flagged whether >=1 session was completed",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreakCalendar"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/progress/milestones": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Derived achievement list — nothing persisted",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Milestones"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/adjustment-events": {
+      "get": {
+        "tags": [
+          "adjustment-event"
+        ],
+        "summary": "The current user's adjustment events, most recent first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentEvents"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/admin/flagged-users": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Users with an escalation rollback, a 'made it worse' flag, or a failed regime-generation job",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminFlaggedUsers"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/users/{userId}/manual-hold": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Toggle manual hold for a user — both the escalation monitor and Flow B skip a held user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "manualHold": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "manualHold"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSetManualHoldResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A reason is required to enable manual hold"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/metrics": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Activation funnel, adverse events, flow failure counts, reversal rate",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMetrics"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/models": {
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Models available for a dry run",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableModels"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/fixtures": {
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "List saved test fixtures",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ONBOARDING",
+                "ADJUSTMENT"
+              ]
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestFixtures"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Save a new test fixture — payload validated against the real onboarding/adjustment schema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ONBOARDING",
+                      "ADJUSTMENT"
+                    ]
+                  },
+                  "payload": {
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestFixture"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload doesn't match the declared type's shape"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/fixtures/{id}": {
+      "delete": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Delete a test fixture (blocked if any test run references it)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteByIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Referenced by existing test runs"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/test-runs": {
+      "post": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Dry-run Flow A or Flow B against a fixture with a chosen model",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fixtureId": {
+                    "type": "string"
+                  },
+                  "model": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "fixtureId",
+                  "model"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Run complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestRunDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown model"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          },
+          "404": {
+            "description": "Fixture not found"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "List the last 50 test runs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestRunSummaries"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/test-runs/{id}": {
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Get a test run's full detail, including its LLM call trace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestRunDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          },
+          "404": {
+            "description": "No test run with this id"
+          }
+        }
+      }
+    },
+    "/admin/experiments/llm-calls": {
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "List logged LLM calls (production and admin-test), most recent first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FLOW_A_DRAFT",
+                "FLOW_B_ADJUST",
+                "FREE_TEXT_CLASSIFIER"
+              ]
+            },
+            "required": false,
+            "name": "flow",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PRODUCTION",
+                "ADMIN_TEST"
+              ]
+            },
+            "required": false,
+            "name": "source",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "model",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmCalls"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/scenarios": {
+      "post": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Start a scenario — cycle 0 is a real Flow A dry run against an ONBOARDING fixture",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fixtureId": {
+                    "type": "string"
+                  },
+                  "model": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "fixtureId",
+                  "model",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioStartResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown model, or fixture isn't ONBOARDING type"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          },
+          "404": {
+            "description": "Fixture not found"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "List scenarios with aggregated cost and latest cycle status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioSummaries"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    },
+    "/admin/experiments/scenarios/{id}/next-cycle": {
+      "post": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Run one more synthetic Flow B cycle against a scenario's most recent valid cycle",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "painPattern": {
+                    "type": "string",
+                    "enum": [
+                      "IMPROVING",
+                      "PLATEAUING",
+                      "WORSENING",
+                      "CONTRADICTORY"
+                    ]
+                  },
+                  "days": {
+                    "type": "integer",
+                    "minimum": 3,
+                    "maximum": 21,
+                    "default": 7
+                  },
+                  "model": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "painPattern",
+                  "model"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cycle complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioCycleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown model, no prior cycle, or the previous cycle isn't VALID"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          },
+          "404": {
+            "description": "Scenario not found"
+          }
+        }
+      }
+    },
+    "/admin/experiments/scenarios/{id}": {
+      "get": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Get a scenario's full cycle chain, diffs, and flattened pain timeline",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          },
+          "404": {
+            "description": "No scenario with this id"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin-experiments"
+        ],
+        "summary": "Delete a scenario and every cycle/LLM-call trace under it (cascades)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteByIdResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Not an admin"
+          }
+        }
+      }
+    }
+  }
+}

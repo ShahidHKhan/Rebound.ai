@@ -1,8 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
@@ -30,7 +33,10 @@ function dayCellStyle(completed: boolean, isToday: boolean): React.CSSProperties
 }
 
 export default function StreakDetailPage() {
-  const calendar = trpc.progress.streakCalendar.useQuery();
+  const calendar = useQuery({
+    queryKey: qk.streakCalendar(),
+    queryFn: async () => unwrap(await api.GET("/progress/streak-calendar")),
+  });
   const todayKey = new Date().toISOString().slice(0, 10);
 
   // Pad the front of the grid so the first real day lands on its correct

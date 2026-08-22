@@ -1,10 +1,12 @@
 "use client";
 
 import { useClerk } from "@clerk/nextjs";
+import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRef } from "react";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -20,7 +22,8 @@ function DeleteAccountSection() {
   const { signOut } = useClerk();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const deleteAccount = trpc.user.deleteMyAccount.useMutation({
+  const deleteAccount = useMutation({
+    mutationFn: async () => unwrap(await api.DELETE("/users/me")),
     onSuccess: () => signOut({ redirectUrl: "/" }),
   });
 

@@ -1,56 +1,11 @@
 import { z } from "zod";
 
-const redFlagAnswersSchema = z.object({
-  severeSuddenPain: z.boolean(),
-  numbnessOrTingling: z.boolean(),
-  recentTrauma: z.boolean(),
-  recentSurgery: z.boolean(),
-  pregnancyRelated: z.boolean(),
-  cardiacSymptomsWithExertion: z.boolean(),
-});
-
-const onboardingAnswersSchema = z.object({
-  age: z.number().int().min(13).max(120),
-  goalType: z.enum(["INJURY_RECOVERY", "STRENGTH", "MOBILITY", "GENERAL_FITNESS"]),
-  conditionFlags: z.array(z.string()),
-  injurySeverity: z.enum(["none", "mild", "moderate", "severe"]),
-  redFlags: redFlagAnswersSchema,
-});
-
-// Free-Text Input Handling: length-bounded (~500-750 chars) — controls
-// token cost and shrinks the prompt-injection surface. Shared by the real
-// onboarding.submit procedure and admin ONBOARDING-type test fixtures, so
-// a fixture is always guaranteed to match what real onboarding accepts.
-const EQUIPMENT_VALUES = [
-  "BODY_ONLY",
-  "MACHINE",
-  "OTHER",
-  "FOAM_ROLL",
-  "KETTLEBELLS",
-  "DUMBBELL",
-  "CABLE",
-  "BARBELL",
-  "BANDS",
-  "MEDICINE_BALL",
-  "EXERCISE_BALL",
-  "EZ_CURL_BAR",
-] as const;
-
-export const onboardingSubmissionSchema = z.object({
-  answers: onboardingAnswersSchema,
-  targetMovement: z.string().min(1).max(200),
-  symptomsText: z.string().max(750),
-  lifestyleContextText: z.string().max(750),
-  // Daily Session Structure: morning "on wake", evening at a user-picked
-  // time. Both optional — regime.activate falls back to 7am/6pm placeholders
-  // when either is missing, so skipping these doesn't block onboarding.
-  wakeTimeMinutes: z.number().int().min(0).max(1439).optional(),
-  eveningTimeMinutes: z.number().int().min(0).max(1439).optional(),
-  // Equipment the user has access to at home. Omitted/empty means
-  // bodyweight-only — Exercise search always allows BODY_ONLY/unrecorded
-  // equipment regardless of this list (packages/agents/src/tools/search-exercises.ts).
-  availableEquipment: z.array(z.enum(EQUIPMENT_VALUES)).optional(),
-});
+// Canonical definition moved to packages/contracts (needed there for OpenAPI
+// generation) — re-exported here so every existing import of
+// `onboardingSubmissionSchema` from this file keeps working unchanged, and
+// so the tRPC and REST request-validation paths can never drift from each
+// other during the coexistence window.
+export { onboardingSubmissionSchema } from "@rebound/contracts";
 
 const draftRegimeExerciseSchema = z.object({
   exerciseId: z.string(),

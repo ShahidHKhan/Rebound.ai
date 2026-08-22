@@ -1,14 +1,15 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
+import type { components } from "@/lib/rest/schema";
 
-import { trpc } from "@/lib/trpc/client";
-
-type FlaggedUser = inferRouterOutputs<AppRouter>["admin"]["flaggedUsers"][number];
+type FlaggedUser = components["schemas"]["AdminFlaggedUsers"][number];
 
 const pageStyle: React.CSSProperties = { maxWidth: 900, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -20,11 +21,18 @@ const cardStyle: React.CSSProperties = {
 const sectionStyle: React.CSSProperties = { marginBottom: "2rem" };
 
 function FlaggedUserRow({ entry }: { entry: FlaggedUser }) {
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const [reason, setReason] = useState(entry.user.manualHoldReason ?? "");
 
-  const setManualHold = trpc.admin.setManualHold.useMutation({
-    onSuccess: () => utils.admin.flaggedUsers.invalidate(),
+  const setManualHold = useMutation({
+    mutationFn: async (input: { manualHold: boolean; reason?: string }) =>
+      unwrap(
+        await api.PATCH("/admin/users/{userId}/manual-hold", {
+          params: { path: { userId: entry.user.id } },
+          body: input,
+        })
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.adminFlaggedUsers() }),
   });
 
   return (
@@ -33,7 +41,7 @@ function FlaggedUserRow({ entry }: { entry: FlaggedUser }) {
         <strong>{entry.user.id}</strong> — risk tier: {entry.user.riskTier}
       </p>
       <p>Flags: {entry.reasons.join(", ")}</p>
-      <p>Most recent: {entry.mostRecent.toLocaleString()}</p>
+      <p>Most recent: {new Date(entry.mostRecent).toLocaleString()}</p>
       <p>
         Manual hold: <strong>{entry.user.manualHold ? "ON" : "off"}</strong>
         {entry.user.manualHold && entry.user.manualHoldReason ? ` — ${entry.user.manualHoldReason}` : ""}
@@ -43,7 +51,7 @@ function FlaggedUserRow({ entry }: { entry: FlaggedUser }) {
         <button
           type="button"
           disabled={setManualHold.isPending}
-          onClick={() => setManualHold.mutate({ userId: entry.user.id, manualHold: false })}
+          onClick={() => setManualHold.mutate({ manualHold: false })}
         >
           Release hold
         </button>
@@ -59,7 +67,7 @@ function FlaggedUserRow({ entry }: { entry: FlaggedUser }) {
           <button
             type="button"
             disabled={setManualHold.isPending || !reason.trim()}
-            onClick={() => setManualHold.mutate({ userId: entry.user.id, manualHold: true, reason })}
+            onClick={() => setManualHold.mutate({ manualHold: true, reason })}
           >
             Put on manual hold
           </button>
@@ -72,8 +80,14 @@ function FlaggedUserRow({ entry }: { entry: FlaggedUser }) {
 }
 
 export default function AdminPage() {
-  const metrics = trpc.admin.metrics.useQuery();
-  const flaggedUsers = trpc.admin.flaggedUsers.useQuery();
+  const metrics = useQuery({
+    queryKey: qk.adminMetrics(),
+    queryFn: async () => unwrap(await api.GET("/admin/metrics")),
+  });
+  const flaggedUsers = useQuery({
+    queryKey: qk.adminFlaggedUsers(),
+    queryFn: async () => unwrap(await api.GET("/admin/flagged-users")),
+  });
 
   if (metrics.isError || flaggedUsers.isError) {
     return (

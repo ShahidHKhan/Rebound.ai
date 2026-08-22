@@ -1,9 +1,12 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -24,7 +27,10 @@ const goalTypeLabels: Record<string, string> = {
 
 export default function ProfilePage() {
   const { user, isLoaded: userLoaded } = useUser();
-  const me = trpc.user.getMe.useQuery();
+  const me = useQuery({
+    queryKey: qk.me(),
+    queryFn: async () => unwrap(await api.GET("/users/me")),
+  });
 
   return (
     <main style={pageStyle}>

@@ -1,10 +1,13 @@
 "use client";
 
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 1000, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -24,15 +27,23 @@ function costLabel(cost: number): string {
 
 function StartScenarioForm() {
   const router = useRouter();
-  const fixturesQuery = trpc.adminExperiments.fixtures.list.useQuery({ type: "ONBOARDING" });
-  const modelsQuery = trpc.adminExperiments.availableModels.useQuery();
+  const fixturesQuery = useQuery({
+    queryKey: qk.adminFixtures("ONBOARDING"),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/fixtures", { params: { query: { type: "ONBOARDING" } } })),
+  });
+  const modelsQuery = useQuery({
+    queryKey: qk.adminModels(),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/models")),
+  });
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [fixtureId, setFixtureId] = useState("");
   const [model, setModel] = useState("");
 
-  const start = trpc.adminExperiments.scenarios.start.useMutation({
+  const start = useMutation({
+    mutationFn: async (input: { name: string; description?: string; fixtureId: string; model: string }) =>
+      unwrap(await api.POST("/admin/experiments/scenarios", { body: input })),
     onSuccess: (data) => router.push(`/admin/experiments/scenarios/${data.scenario.id}`),
   });
 
@@ -107,7 +118,10 @@ function StartScenarioForm() {
 }
 
 export default function ScenariosPage() {
-  const listQuery = trpc.adminExperiments.scenarios.list.useQuery();
+  const listQuery = useQuery({
+    queryKey: qk.adminScenarios(),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/scenarios")),
+  });
   const scenarios = listQuery.data ?? [];
 
   return (

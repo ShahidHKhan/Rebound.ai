@@ -1,11 +1,16 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, ScrollView, Text, TextInput, View } from "react-native";
 
-import { ChipGroup } from "../../components/ChipGroup";
-import { trpc } from "../../lib/trpc";
-import { useSharedStyles } from "../../lib/styles";
 import { Button } from "../../components/Button";
+import { ChipGroup } from "../../components/ChipGroup";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
+import type { paths } from "../../lib/rest/schema";
+import { useSharedStyles } from "../../lib/styles";
+
+type OnboardingSubmitInput = NonNullable<paths["/onboarding"]["post"]["requestBody"]>["content"]["application/json"];
 
 function formatTimeOfDay(minutes: number): string {
   const hour = Math.floor(minutes / 60);
@@ -204,7 +209,9 @@ export default function OnboardingScreen() {
   const [crisisDetected, setCrisisDetected] = useState(false);
   const [cooldownRegimeCreatedAt, setCooldownRegimeCreatedAt] = useState<Date | null>(null);
 
-  const submit = trpc.onboarding.submit.useMutation({
+  const api = useApi();
+  const submit = useMutation({
+    mutationFn: async (input: OnboardingSubmitInput) => unwrap(await api.POST("/onboarding", { body: input })),
     onSuccess: (result) => {
       if (result.status === "crisis_detected") {
         setCrisisDetected(true);
@@ -218,13 +225,13 @@ export default function OnboardingScreen() {
     },
   });
 
-  const jobStatus = trpc.onboarding.getJobStatus.useQuery(
-    { jobId: jobId ?? "" },
-    {
-      enabled: jobId !== null,
-      refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 2000 : false),
-    }
-  );
+  const jobStatus = useQuery({
+    queryKey: ["onboarding", "jobs", jobId],
+    queryFn: async () =>
+      unwrap(await api.GET("/onboarding/jobs/{jobId}", { params: { path: { jobId: jobId ?? "" } } })),
+    enabled: jobId !== null,
+    refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 2000 : false),
+  });
 
   function toggleSingle<T extends string>(setter: (v: T[]) => void, value: T) {
     setter([value]);

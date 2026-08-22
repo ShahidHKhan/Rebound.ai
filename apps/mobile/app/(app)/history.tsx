@@ -1,14 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { Button } from "../../components/Button";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
+import { qk } from "../../lib/rest/query-keys";
 import { useSharedStyles } from "../../lib/styles";
 
 export default function HistoryScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
-  const logsQuery = trpc.sessionLog.list.useQuery();
+  const api = useApi();
+  const logsQuery = useQuery({
+    queryKey: qk.sessionLogs(),
+    queryFn: async () => unwrap(await api.GET("/session-logs")),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

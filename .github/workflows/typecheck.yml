@@ -1,0 +1,49 @@
+name: Typecheck
+
+on:
+  pull_request:
+    branches: [dev, stage, main]
+  push:
+    branches: [dev, stage, main]
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # packages/contracts/openapi.json and both apps' lib/rest/schema.d.ts
+      # are committed, generated artifacts (see packages/contracts/src/generate.ts) —
+      # regenerate here and fail if the committed copies are stale, so a
+      # schema change without a regenerate-and-commit step never lands.
+      - name: Regenerate OpenAPI contract + typed clients
+        run: pnpm generate
+
+      - name: Fail on generated-file drift
+        run: |
+          if ! git diff --exit-code -- packages/contracts/openapi.json apps/web/src/lib/rest/schema.d.ts apps/mobile/lib/rest/schema.d.ts; then
+            echo "::error::Generated OpenAPI artifacts are out of date. Run 'pnpm generate' and commit the result."
+            exit 1
+          fi
+
+      # Next.js 16's typed-routes feature (PageProps/LayoutProps used across
+      # apps/web) is ambient global types written to the gitignored
+      # .next/types/ — normally produced by `next dev`/`next build`. A clean
+      # CI checkout has neither, so `tsc --noEmit` fails on a fresh clone
+      # without this. `next typegen` generates just the types, no full build.
+      - name: Generate Next.js route types
+        working-directory: apps/web
+        run: npx next typegen
+
+      - run: pnpm typecheck

@@ -1,8 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { Button } from "../../../components/Button";
-import { trpc } from "../../../lib/trpc";
+import { unwrap } from "../../../lib/rest/api-error";
+import { useApi } from "../../../lib/rest/ApiProvider";
+import { qk } from "../../../lib/rest/query-keys";
 import { useSharedStyles } from "../../../lib/styles";
 
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -10,7 +13,11 @@ const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 export default function StreakDetailScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
-  const calendar = trpc.progress.streakCalendar.useQuery();
+  const api = useApi();
+  const calendar = useQuery({
+    queryKey: qk.streakCalendar(),
+    queryFn: async () => unwrap(await api.GET("/progress/streak-calendar")),
+  });
   const todayKey = new Date().toISOString().slice(0, 10);
 
   const leadingBlanks = calendar.data ? new Date(calendar.data.days[0].date).getUTCDay() : 0;

@@ -1,8 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -38,7 +41,10 @@ function readMedia(media: unknown): { instructions: string[]; images: string[] }
 }
 
 export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
-  const exerciseQuery = trpc.exercise.getById.useQuery({ exerciseId });
+  const exerciseQuery = useQuery({
+    queryKey: qk.exercise(exerciseId),
+    queryFn: async () => unwrap(await api.GET("/exercises/{exerciseId}", { params: { path: { exerciseId } } })),
+  });
 
   if (exerciseQuery.isLoading) {
     return (
