@@ -1,11 +1,14 @@
 import { useAuth } from "@clerk/clerk-expo";
+import { useMutation } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, AppState, ScrollView, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/Button";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
 import { useSharedStyles } from "../../lib/styles";
+import { trpc } from "../../lib/trpc";
 import { syncDailyNotifications, type TodayData } from "../../lib/notifications";
 
 type SessionSlot = "MORNING" | "EVENING";
@@ -13,8 +16,10 @@ type SessionSlot = "MORNING" | "EVENING";
 function DeleteAccountSection() {
   const { signOut } = useAuth();
   const shared = useSharedStyles();
+  const api = useApi();
 
-  const deleteAccount = trpc.user.deleteMyAccount.useMutation({
+  const deleteAccount = useMutation({
+    mutationFn: async () => unwrap(await api.DELETE("/users/me")),
     onSuccess: () => signOut(),
   });
 

@@ -1,10 +1,12 @@
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/Button";
 import { ChipGroup } from "../../components/ChipGroup";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
 import { useSharedStyles } from "../../lib/styles";
 
 type ReasonCode =
@@ -31,7 +33,11 @@ export default function CancelScreen() {
   const [reasonCode, setReasonCode] = useState<ReasonCode[]>([]);
   const [comment, setComment] = useState("");
 
-  const submitFeedback = trpc.user.submitCancellationFeedback.useMutation();
+  const api = useApi();
+  const submitFeedback = useMutation({
+    mutationFn: async (input: { reasonCode: ReasonCode; comment?: string }) =>
+      unwrap(await api.POST("/users/me/cancellation-feedback", { body: input })),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

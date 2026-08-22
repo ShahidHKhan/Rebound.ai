@@ -1,9 +1,12 @@
 "use client";
 
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: "2rem" };
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
@@ -22,7 +25,10 @@ function timeInputToMinutes(value: string): number {
 }
 
 export default function NotificationSettingsPage() {
-  const current = trpc.user.getNotificationTimes.useQuery();
+  const current = useQuery({
+    queryKey: qk.notificationTimes(),
+    queryFn: async () => unwrap(await api.GET("/users/me/notification-times")),
+  });
 
   // Same 7am/6pm fallback regime.activate uses when these are unset.
   const [wakeTime, setWakeTime] = useState("07:00");
@@ -35,7 +41,9 @@ export default function NotificationSettingsPage() {
     setEveningTime(minutesToTimeInput(current.data.eveningTimeMinutes) || "18:00");
   }, [current.data]);
 
-  const update = trpc.user.updateNotificationTimes.useMutation({
+  const update = useMutation({
+    mutationFn: async (input: { wakeTimeMinutes: number; eveningTimeMinutes: number }) =>
+      unwrap(await api.PATCH("/users/me/notification-times", { body: input })),
     onSuccess: () => setSaved(true),
   });
 

@@ -1,3 +1,4 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Linking, ScrollView, Switch, Text, View } from "react-native";
@@ -5,8 +6,11 @@ import { Linking, ScrollView, Switch, Text, View } from "react-native";
 import { Button } from "../../components/Button";
 import { ChipGroup } from "../../components/ChipGroup";
 import { useAccessibility } from "../../lib/accessibility";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
+import { qk } from "../../lib/rest/query-keys";
 import { useSharedStyles } from "../../lib/styles";
+import { trpc } from "../../lib/trpc";
 
 // Legal pages live on apps/web (see startup-launch-checklist.md > Category A) —
 // linked out to rather than duplicated as native screens. Same fallback
@@ -35,8 +39,14 @@ const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => i * 30).map((minutes) 
 // since it stays small (page-map.md's Engagement & Motivation section).
 function NotificationTimesSection() {
   const shared = useSharedStyles();
+  // workoutSession hasn't migrated off tRPC yet — utils stays tRPC-sourced
+  // specifically for that invalidation until its own phase lands.
   const utils = trpc.useUtils();
-  const current = trpc.user.getNotificationTimes.useQuery();
+  const api = useApi();
+  const current = useQuery({
+    queryKey: qk.notificationTimes(),
+    queryFn: async () => unwrap(await api.GET("/users/me/notification-times")),
+  });
 
   const [wakeTimeMinutes, setWakeTimeMinutes] = useState<string[]>(["420"]);
   const [eveningTimeMinutes, setEveningTimeMinutes] = useState<string[]>(["1080"]);
@@ -48,7 +58,9 @@ function NotificationTimesSection() {
     if (current.data.eveningTimeMinutes != null) setEveningTimeMinutes([String(current.data.eveningTimeMinutes)]);
   }, [current.data]);
 
-  const update = trpc.user.updateNotificationTimes.useMutation({
+  const update = useMutation({
+    mutationFn: async (input: { wakeTimeMinutes: number; eveningTimeMinutes: number }) =>
+      unwrap(await api.PATCH("/users/me/notification-times", { body: input })),
     onSuccess: () => {
       setSaved(true);
       // HomeScreen's effect re-syncs local notifications whenever

@@ -11,3 +11,11 @@ export type { ApiErrorCode } from "./errors";
 // single-entry-point convention — no "exports" map exists to make subpath
 // imports resolve.
 export { getHealth } from "./handlers/health";
+export { getExerciseById } from "./handlers/exercise";
+export {
+  getMe,
+  submitCancellationFeedback,
+  getNotificationTimes,
+  updateNotificationTimes,
+  deleteMyAccount,
+} from "./handlers/user";

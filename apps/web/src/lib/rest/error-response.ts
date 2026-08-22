@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { Prisma } from "@rebound/db";
 
 import { ApiError, type ApiErrorCode } from "@rebound/api";
@@ -17,6 +19,16 @@ const STATUS: Record<ApiErrorCode, number> = {
 // server-side and replaced with a generic message in production — never the
 // raw exception text, which can carry internal file paths/table names.
 export function errorResponse(err: unknown): Response {
+  // Replaces tRPC's automatic input-validation-error shape — a route.ts
+  // parses path/query/body against a packages/contracts Zod schema before
+  // calling into a handler; a parse failure lands here.
+  if (err instanceof z.ZodError) {
+    return Response.json(
+      { error: { code: "BAD_REQUEST", message: "Invalid request.", issues: err.issues } },
+      { status: 400 }
+    );
+  }
+
   // Real, low-risk improvement over the tRPC version: findUniqueOrThrow's
   // "not found" (P2025) is a routine 404, not a 500 — the tRPC path never
   // special-cased this and surfaced it as a generic INTERNAL_SERVER_ERROR.

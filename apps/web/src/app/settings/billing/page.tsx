@@ -1,8 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -14,7 +17,10 @@ const cardStyle: React.CSSProperties = {
 const linkStyle: React.CSSProperties = { color: "#2563eb", textDecoration: "underline" };
 
 export default function BillingPage() {
-  const me = trpc.user.getMe.useQuery();
+  const me = useQuery({
+    queryKey: qk.me(),
+    queryFn: async () => unwrap(await api.GET("/users/me")),
+  });
 
   return (
     <main style={pageStyle}>

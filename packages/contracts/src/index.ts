@@ -5,3 +5,5 @@ export { registry } from "./registry";
 // module here too, so both `generate.ts` (which needs every path registered)
 // and consumers (which need the types) go through this one file.
 export * from "./schemas/health";
+export * from "./schemas/exercise";
+export * from "./schemas/user";

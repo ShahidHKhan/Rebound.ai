@@ -34,6 +34,198 @@
           "ok",
           "timestamp"
         ]
+      },
+      "ExerciseMedia": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Exercise": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "MOBILITY",
+              "STRENGTH",
+              "STRETCH"
+            ]
+          },
+          "targetMuscleGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficultyLevel": {
+            "type": "integer"
+          },
+          "equipment": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "BODY_ONLY",
+              "MACHINE",
+              "OTHER",
+              "FOAM_ROLL",
+              "KETTLEBELLS",
+              "DUMBBELL",
+              "CABLE",
+              "BARBELL",
+              "BANDS",
+              "MEDICINE_BALL",
+              "EXERCISE_BALL",
+              "EZ_CURL_BAR"
+            ]
+          },
+          "contraindications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "progressionGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "media": {
+            "$ref": "#/components/schemas/ExerciseMedia"
+          },
+          "source": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "targetMuscleGroups",
+          "difficultyLevel",
+          "equipment",
+          "contraindications",
+          "progressionGroup",
+          "media",
+          "source",
+          "externalId"
+        ]
+      },
+      "GetMeResponse": {
+        "type": "object",
+        "properties": {
+          "goalType": {
+            "type": "string",
+            "enum": [
+              "INJURY_RECOVERY",
+              "STRENGTH",
+              "MOBILITY",
+              "GENERAL_FITNESS"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "wakeTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "eveningTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "billing": {
+            "type": "object",
+            "properties": {
+              "trialActive": {
+                "type": "boolean"
+              },
+              "firstAdjustmentAt": {
+                "type": "string",
+                "nullable": true,
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "trialActive",
+              "firstAdjustmentAt"
+            ]
+          }
+        },
+        "required": [
+          "goalType",
+          "createdAt",
+          "wakeTimeMinutes",
+          "eveningTimeMinutes",
+          "billing"
+        ]
+      },
+      "SubmitCancellationFeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "received"
+        ]
+      },
+      "NotificationTimes": {
+        "type": "object",
+        "properties": {
+          "wakeTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "eveningTimeMinutes": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "wakeTimeMinutes",
+          "eveningTimeMinutes"
+        ]
+      },
+      "DeleteMyAccountResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "success"
+        ]
       }
     },
     "parameters": {}
@@ -55,6 +247,243 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/exercises/{exerciseId}": {
+      "get": {
+        "tags": [
+          "exercise"
+        ],
+        "summary": "Get a single exercise-library entry by id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "exerciseId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exercise found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No exercise with this id"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get the current user's profile + billing status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Permanently delete the current user's account and app data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteMyAccountResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/users/me/cancellation-feedback": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Record a cancellation reason (beta preview — no real subscription exists yet)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasonCode": {
+                    "type": "string",
+                    "enum": [
+                      "TOO_EXPENSIVE",
+                      "NOT_SEEING_RESULTS",
+                      "PLAN_TOO_DEMANDING",
+                      "PLAN_TOO_EASY",
+                      "TECHNICAL_ISSUES",
+                      "OTHER"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reasonCode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitCancellationFeedbackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/users/me/notification-times": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get the current user's wake / evening session times",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTimes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Update the current user's wake / evening session times",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "wakeTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  },
+                  "eveningTimeMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1439
+                  }
+                },
+                "required": [
+                  "wakeTimeMinutes",
+                  "eveningTimeMinutes"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTimes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated"
           }
         }
       }

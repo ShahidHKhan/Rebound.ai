@@ -1,8 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Image, ScrollView, Text, View } from "react-native";
 
 import { Button } from "../../../components/Button";
-import { trpc } from "../../../lib/trpc";
+import { unwrap } from "../../../lib/rest/api-error";
+import { useApi } from "../../../lib/rest/ApiProvider";
+import { qk } from "../../../lib/rest/query-keys";
 import { useSharedStyles } from "../../../lib/styles";
 
 const IMAGE_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
@@ -25,7 +28,11 @@ export default function ExerciseDetailScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
   const { exerciseId } = useLocalSearchParams<{ exerciseId: string }>();
-  const exerciseQuery = trpc.exercise.getById.useQuery({ exerciseId });
+  const api = useApi();
+  const exerciseQuery = useQuery({
+    queryKey: qk.exercise(exerciseId),
+    queryFn: async () => unwrap(await api.GET("/exercises/{exerciseId}", { params: { path: { exerciseId } } })),
+  });
 
   if (exerciseQuery.isLoading) {
     return (
