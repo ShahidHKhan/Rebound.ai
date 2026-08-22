@@ -7,9 +7,6 @@
     "@rebound/api": "workspace:*",
     "@rebound/contracts": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
-    "@trpc/client": "^11.0.0",
-    "@trpc/react-query": "^11.0.0",
-    "@trpc/server": "^11.0.0",
     "expo": "~57.0.14",
     "expo-constants": "~57.0.12",
     "expo-dev-client": "~57.0.13",
@@ -25,8 +22,7 @@
     "react-native": "0.86.2",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.2",
-    "react-native-web": "^0.21.2",
-    "superjson": "^2.2.1"
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@expo/ngrok": "^4.1.3",

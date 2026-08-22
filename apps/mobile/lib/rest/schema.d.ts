@@ -1004,6 +1004,881 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/flagged-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Users with an escalation rollback, a 'made it worse' flag, or a failed regime-generation job */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminFlaggedUsers"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{userId}/manual-hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Toggle manual hold for a user — both the escalation monitor and Flow B skip a held user */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        manualHold: boolean;
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminSetManualHoldResponse"];
+                    };
+                };
+                /** @description A reason is required to enable manual hold */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/admin/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Activation funnel, adverse events, flow failure counts, reversal rate */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminMetrics"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Models available for a dry run */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AvailableModels"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/fixtures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List saved test fixtures */
+        get: {
+            parameters: {
+                query?: {
+                    type?: "ONBOARDING" | "ADJUSTMENT";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TestFixtures"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Save a new test fixture — payload validated against the real onboarding/adjustment schema */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        description?: string;
+                        /** @enum {string} */
+                        type: "ONBOARDING" | "ADJUSTMENT";
+                        payload?: unknown;
+                    };
+                };
+            };
+            responses: {
+                /** @description Created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TestFixture"];
+                    };
+                };
+                /** @description Payload doesn't match the declared type's shape */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/fixtures/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a test fixture (blocked if any test run references it) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DeleteByIdResponse"];
+                    };
+                };
+                /** @description Referenced by existing test runs */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/test-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the last 50 test runs */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TestRunSummaries"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Dry-run Flow A or Flow B against a fixture with a chosen model */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        fixtureId: string;
+                        model: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Run complete */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TestRunDetail"];
+                    };
+                };
+                /** @description Unknown model */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Fixture not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/test-runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a test run's full detail, including its LLM call trace */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TestRunDetail"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No test run with this id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/llm-calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List logged LLM calls (production and admin-test), most recent first */
+        get: {
+            parameters: {
+                query?: {
+                    flow?: "FLOW_A_DRAFT" | "FLOW_B_ADJUST" | "FREE_TEXT_CLASSIFIER";
+                    source?: "PRODUCTION" | "ADMIN_TEST";
+                    model?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LlmCalls"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List scenarios with aggregated cost and latest cycle status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScenarioSummaries"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Start a scenario — cycle 0 is a real Flow A dry run against an ONBOARDING fixture */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        fixtureId: string;
+                        model: string;
+                        name: string;
+                        description?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Started */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScenarioStartResponse"];
+                    };
+                };
+                /** @description Unknown model, or fixture isn't ONBOARDING type */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Fixture not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/scenarios/{id}/next-cycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run one more synthetic Flow B cycle against a scenario's most recent valid cycle */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        painPattern: "IMPROVING" | "PLATEAUING" | "WORSENING" | "CONTRADICTORY";
+                        /** @default 7 */
+                        days?: number;
+                        model: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Cycle complete */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScenarioCycleResponse"];
+                    };
+                };
+                /** @description Unknown model, no prior cycle, or the previous cycle isn't VALID */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Scenario not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/experiments/scenarios/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a scenario's full cycle chain, diffs, and flattened pain timeline */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ScenarioDetailResponse"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No scenario with this id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a scenario and every cycle/LLM-call trace under it (cascades) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DeleteByIdResponse"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not an admin */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1283,6 +2158,229 @@ export interface components {
             };
         };
         AdjustmentEvents: components["schemas"]["AdjustmentEvent"][];
+        AdminFlaggedUsers: {
+            user: {
+                id: string;
+                /** @enum {string} */
+                goalType: "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS";
+                /** @enum {string} */
+                riskTier: "GENERAL" | "LIGHT_INJURY" | "HEAVIER_CHRONIC_ELDERLY";
+                manualHold: boolean;
+                manualHoldReason: string | null;
+                /** Format: date-time */
+                createdAt: string;
+            };
+            reasons: string[];
+            /** Format: date-time */
+            mostRecent: string;
+        }[];
+        AdminSetManualHoldResponse: {
+            userId: string;
+            manualHold: boolean;
+            manualHoldReason: string | null;
+        };
+        AdminMetrics: {
+            activationFunnel: {
+                totalUsers: number;
+                regimeGenerated: number;
+                regimeActivated: number;
+                loggedAtLeastOnce: number;
+            };
+            adverseEvents: {
+                flaggedSessionLogs: number;
+                escalationRollbacks: number;
+            };
+            flowFailures: {
+                flowAJobsTotal: number;
+                flowAJobsFailed: number;
+                flowBScheduledAdjustments: number;
+                flowBScheduledHolds: number;
+            };
+            reversalRate: {
+                totalAdjustmentEvents: number;
+                markedReversed: number;
+                note: string;
+            };
+        };
+        AvailableModels: {
+            id: string;
+            label: string;
+            inputPerMTok: number;
+            outputPerMTok: number;
+        }[];
+        TestFixture: {
+            id: string;
+            name: string;
+            description: string | null;
+            /** @enum {string} */
+            type: "ONBOARDING" | "ADJUSTMENT";
+            payload?: unknown;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        TestFixtures: components["schemas"]["TestFixture"][];
+        DeleteByIdResponse: {
+            id: string;
+        };
+        LlmCall: {
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            flow: "FLOW_A_DRAFT" | "FLOW_B_ADJUST" | "FREE_TEXT_CLASSIFIER";
+            /** @enum {string} */
+            source: "PRODUCTION" | "ADMIN_TEST";
+            model: string;
+            groupId: string;
+            sequenceIndex: number;
+            userId: string | null;
+            testRunId: string | null;
+            inputTokens: number;
+            outputTokens: number;
+            latencyMs: number;
+            costUsd: string | null;
+            stopReason: string | null;
+            success: boolean;
+            errorMessage: string | null;
+            requestJson?: unknown;
+            responseJson?: unknown;
+        };
+        LlmCalls: components["schemas"]["LlmCall"][];
+        TestRunDetail: {
+            id: string;
+            fixtureId: string | null;
+            /** @enum {string} */
+            flow: "FLOW_A_DRAFT" | "FLOW_B_ADJUST" | "FREE_TEXT_CLASSIFIER";
+            model: string;
+            /** @enum {string} */
+            status: "RUNNING" | "VALID" | "INVALID" | "ERROR";
+            resultJson?: unknown;
+            createdByUserId: string;
+            /** Format: date-time */
+            createdAt: string;
+            scenarioId: string | null;
+            cycleIndex: number | null;
+            inputJson?: unknown;
+            llmCalls: components["schemas"]["LlmCall"][];
+            fixture: components["schemas"]["TestFixture"] & unknown;
+            exerciseNames: {
+                [key: string]: {
+                    name: string;
+                    category: string;
+                };
+            };
+        };
+        TestRunSummary: {
+            id: string;
+            fixtureId: string | null;
+            /** @enum {string} */
+            flow: "FLOW_A_DRAFT" | "FLOW_B_ADJUST" | "FREE_TEXT_CLASSIFIER";
+            model: string;
+            /** @enum {string} */
+            status: "RUNNING" | "VALID" | "INVALID" | "ERROR";
+            resultJson?: unknown;
+            createdByUserId: string;
+            /** Format: date-time */
+            createdAt: string;
+            scenarioId: string | null;
+            cycleIndex: number | null;
+            inputJson?: unknown;
+            fixture: {
+                name: string;
+            } | null;
+            llmCalls: {
+                costUsd: string | null;
+            }[];
+        };
+        TestRunSummaries: components["schemas"]["TestRunSummary"][];
+        ScenarioStartResponse: {
+            scenario: {
+                id: string;
+                name: string;
+                description: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                createdByUserId: string;
+            };
+            testRun: components["schemas"]["TestRunDetail"];
+        };
+        ScenarioCycleResponse: components["schemas"]["TestRunDetail"] & {
+            diffFromPrevious: {
+                exerciseId: string;
+                /** @enum {string} */
+                change: "added" | "removed" | "changed" | "unchanged";
+                before?: {
+                    exerciseId: string;
+                    sets?: number;
+                    reps?: number;
+                    durationSeconds?: number;
+                    frequency?: string;
+                    /** @enum {string} */
+                    sessionSlot: "MORNING" | "EVENING";
+                };
+                after?: {
+                    exerciseId: string;
+                    sets?: number;
+                    reps?: number;
+                    durationSeconds?: number;
+                    frequency?: string;
+                    /** @enum {string} */
+                    sessionSlot: "MORNING" | "EVENING";
+                };
+                changedFields?: string[];
+            }[] | null;
+            diffFromOriginal: {
+                exerciseId: string;
+                /** @enum {string} */
+                change: "added" | "removed" | "changed" | "unchanged";
+                before?: {
+                    exerciseId: string;
+                    sets?: number;
+                    reps?: number;
+                    durationSeconds?: number;
+                    frequency?: string;
+                    /** @enum {string} */
+                    sessionSlot: "MORNING" | "EVENING";
+                };
+                after?: {
+                    exerciseId: string;
+                    sets?: number;
+                    reps?: number;
+                    durationSeconds?: number;
+                    frequency?: string;
+                    /** @enum {string} */
+                    sessionSlot: "MORNING" | "EVENING";
+                };
+                changedFields?: string[];
+            }[] | null;
+        };
+        ScenarioSummaries: {
+            id: string;
+            name: string;
+            description: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            cycleCount: number;
+            /** @enum {string|null} */
+            latestStatus: "RUNNING" | "VALID" | "INVALID" | "ERROR" | null;
+            totalCost: number;
+        }[];
+        ScenarioDetailResponse: {
+            scenario: {
+                id: string;
+                name: string;
+                description: string | null;
+                /** Format: date-time */
+                createdAt: string;
+            };
+            cycles: components["schemas"]["ScenarioCycleResponse"][];
+            painTimeline: {
+                simulatedDay: number;
+                painScore: number;
+                madeItWorseFlag: boolean;
+                cycleIndex: number;
+            }[];
+        };
     };
     responses: never;
     parameters: never;

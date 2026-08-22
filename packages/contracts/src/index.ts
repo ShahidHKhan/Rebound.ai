@@ -13,3 +13,5 @@ export * from "./schemas/session-log";
 export * from "./schemas/workout-session";
 export * from "./schemas/progress";
 export * from "./schemas/adjustment-event";
+export * from "./schemas/admin";
+export * from "./schemas/admin-experiments";

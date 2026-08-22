@@ -1,7 +1,8 @@
 import { prisma } from "@rebound/db";
 
-import { appRouter } from "../src/root";
-import { createInnerContext } from "../src/context";
+import { getOnboardingJobStatus, submitOnboarding } from "../src/handlers/onboarding";
+import { activateRegime } from "../src/handlers/regime";
+import { withTestCtx } from "../src/test-utils";
 
 const TEST_USER_ID = "test-user-trpc-e2e";
 
@@ -36,20 +37,18 @@ async function main() {
   await prisma.sessionLog.deleteMany({ where: { userId: TEST_USER_ID } });
   await prisma.regime.deleteMany({ where: { userId: TEST_USER_ID } });
 
-  const caller = appRouter.createCaller(createInnerContext({ userId: TEST_USER_ID }));
-
-  const submitResult = await caller.onboarding.submit(SUBMISSION);
+  const submitResult = await withTestCtx(TEST_USER_ID, (ctx) => submitOnboarding(ctx, SUBMISSION));
   console.log("submit ->", submitResult);
 
   if (submitResult.status !== "job_created") {
     throw new Error("Expected a job to be created");
   }
 
-  let job = await caller.onboarding.getJobStatus({ jobId: submitResult.jobId });
+  let job = await withTestCtx(TEST_USER_ID, (ctx) => getOnboardingJobStatus(ctx, { jobId: submitResult.jobId }));
   while (job.status === "PENDING") {
     console.log("polling... status:", job.status);
     await sleep(1500);
-    job = await caller.onboarding.getJobStatus({ jobId: submitResult.jobId });
+    job = await withTestCtx(TEST_USER_ID, (ctx) => getOnboardingJobStatus(ctx, { jobId: submitResult.jobId }));
   }
 
   console.log("final job:", job);
@@ -58,7 +57,9 @@ async function main() {
     throw new Error(`Job did not complete successfully: ${JSON.stringify(job)}`);
   }
 
-  const activateResult = await caller.regime.activate({ regimeId: job.resultRegimeId });
+  const activateResult = await withTestCtx(TEST_USER_ID, (ctx) =>
+    activateRegime(ctx, { regimeId: job.resultRegimeId! })
+  );
   console.log("activate ->", activateResult);
 
   const workoutSessions = await prisma.workoutSession.findMany({

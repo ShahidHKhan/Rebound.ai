@@ -450,7 +450,7 @@ See Clinical Risk Framing > Free-Text Input Handling for the full resolution: le
 | Background jobs (v1) | Vercel Cron + serverless functions, no external queue | Escalation monitor and Flow B's user volume are both small enough at beta scale to run inline/in-cron without dedicated job infra |
 | Escalation monitor | Runs inline, synchronously, inside the Session Log write endpoint | It's a threshold check against one row of data — no reason to queue it |
 | Onboarding regime generation | Async job + client polling | LLM draft + validation can take several seconds; blocking the UI on that is a bad first impression for a habit-loop app |
-| API layer | tRPC | Shared TypeScript types across the Next.js backend, Next.js web, and React Native app — one contract, no drift, matters more here since a type mismatch could mean a misread pain score |
+| API layer | REST, OpenAPI-contracted | Zod schemas generate a committed OpenAPI spec and a typed client both the Next.js web app and the React Native app import — one contract, no drift, matters more here since a type mismatch could mean a misread pain score. Plain REST underneath keeps the API callable by any future client, not just TypeScript ones. |
 | ORM | Prisma | Best-documented option for a first build; RLS-via-Clerk-JWT is a well-trodden path with Prisma + Supabase |
 | Environments | Vercel preview deploys (free, automatic) double as staging; one beta environment tracks toward production | No separate staging infra to build or pay for at this stage |
 | Admin tooling | Basic internal admin view in v1 | No clinician in the loop yet — you need visibility into flagged users and a manual override, not just automated guardrails |
@@ -470,7 +470,7 @@ graph TD
     end
 
     subgraph Backend["Next.js Backend (Vercel, serverless)"]
-        API[tRPC Router]
+        API[REST API]
         CRON["Vercel Cron — Flow B trigger"]
         ADMIN["Admin routes (/admin)"]
     end
@@ -480,8 +480,8 @@ graph TD
     LLM[Anthropic API]
     ERR[Sentry]
 
-    RN -->|tRPC| API
-    WEB -->|tRPC| API
+    RN -->|REST| API
+    WEB -->|REST| API
     WEB --> ADMIN
     API --> AUTH
     API --> DB
@@ -496,7 +496,7 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant U as User (App)
-    participant API as tRPC API
+    participant API as REST API
     participant DB as Postgres
     participant LLM as Anthropic API
 
@@ -538,7 +538,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant U as User (App)
-    participant API as tRPC API
+    participant API as REST API
     participant DB as Postgres
 
     U->>API: submit Session Log (pain_score, flag, etc.)
@@ -587,9 +587,9 @@ To support the above without external job infra:
 - **User.role** (enum: `user`, `admin`) — sourced from Clerk metadata, checked server-side on every admin route, *and* enforced at the RLS layer so a leaked admin URL alone can't expose data.
 - **User.signup_cohort** (enum, e.g. `beta`, `prod`) — kept for internal tracking/metrics during beta even though the database itself is disposable; useful if you later decide to hand-pick specific beta accounts to migrate into production (see Production notes below).
 
-### API layer: tRPC
+### API layer: REST (OpenAPI-contracted)
 
-One shared `packages/api` (or equivalent) TypeScript package defines the router and Zod input/output schemas — the same Zod schemas doing structural regime validation (see LLM Reliability & Failure Handling) live here, so "shape of a regime the API will accept" and "shape of a regime the LLM is allowed to draft" stay one definition instead of two. Both the React Native app and the Next.js web app import from it directly. This keeps Regime, Session Log, and Adjustment Event shapes — the safety-relevant ones — in lockstep across every client without hand-maintained API docs. Practical cost: this pushes you toward a monorepo (`apps/mobile`, `apps/web`, `packages/api`, `packages/db`) if you're not already there.
+One shared `packages/contracts` TypeScript package defines Zod input/output schemas for every endpoint and generates a committed OpenAPI spec from them — the same Zod schemas doing structural regime validation (see LLM Reliability & Failure Handling) live here, so "shape of a regime the API will accept" and "shape of a regime the LLM is allowed to draft" stay one definition instead of two. Business logic lives in `packages/api` as plain framework-agnostic handler functions; thin Next.js Route Handlers under `apps/web`'s `/api/v1` wire them up. Both the React Native app and the Next.js web app consume a typed client generated from the OpenAPI spec, so Regime, Session Log, and Adjustment Event shapes — the safety-relevant ones — stay in lockstep across every client without hand-maintained API docs, over a transport any client (including a non-TypeScript one) can call directly. Practical cost: this pushes you toward a monorepo (`apps/mobile`, `apps/web`, `packages/api`, `packages/contracts`, `packages/db`) if you're not already there.
 
 ### Admin panel (v1 scope)
 

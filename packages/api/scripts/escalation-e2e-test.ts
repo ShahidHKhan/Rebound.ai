@@ -1,8 +1,10 @@
 import { prisma } from "@rebound/db";
 import { runFlowBForUser } from "@rebound/agents";
 
-import { appRouter } from "../src/root";
-import { createInnerContext } from "../src/context";
+import { getOnboardingJobStatus, submitOnboarding } from "../src/handlers/onboarding";
+import { activateRegime } from "../src/handlers/regime";
+import { createSessionLog } from "../src/handlers/session-log";
+import { withTestCtx } from "../src/test-utils";
 
 const TEST_USER_ID = "test-user-escalation-e2e";
 
@@ -49,20 +51,18 @@ async function main() {
   await prisma.regime.deleteMany({ where: { userId: TEST_USER_ID } });
   await prisma.regimeGenerationJob.deleteMany({ where: { userId: TEST_USER_ID } });
 
-  const caller = appRouter.createCaller(createInnerContext({ userId: TEST_USER_ID }));
-
   // Get a v1 ACTIVE regime via the real submit -> poll -> activate chain.
-  const submitResult = await caller.onboarding.submit(SUBMISSION);
+  const submitResult = await withTestCtx(TEST_USER_ID, (ctx) => submitOnboarding(ctx, SUBMISSION));
   if (submitResult.status !== "job_created") throw new Error("Expected a job");
 
-  let job = await caller.onboarding.getJobStatus({ jobId: submitResult.jobId });
+  let job = await withTestCtx(TEST_USER_ID, (ctx) => getOnboardingJobStatus(ctx, { jobId: submitResult.jobId }));
   while (job.status === "PENDING") {
     await sleep(1500);
-    job = await caller.onboarding.getJobStatus({ jobId: submitResult.jobId });
+    job = await withTestCtx(TEST_USER_ID, (ctx) => getOnboardingJobStatus(ctx, { jobId: submitResult.jobId }));
   }
   if (job.status !== "COMPLETE" || !job.resultRegimeId) throw new Error("Job did not complete");
 
-  await caller.regime.activate({ regimeId: job.resultRegimeId });
+  await withTestCtx(TEST_USER_ID, (ctx) => activateRegime(ctx, { regimeId: job.resultRegimeId! }));
   console.log("v1 active regime:", job.resultRegimeId);
 
   // Produce a real v2 via Flow B (improving trend -> progress), so there's
@@ -76,7 +76,7 @@ async function main() {
   console.log("active regime before escalation:", beforeActive?.id, beforeActive?.versionNumber);
 
   // Now log a red (7-10) pain score — should trigger an immediate rollback.
-  const logResult = await caller.sessionLog.create({ painScore: 8, flag: false });
+  const logResult = await withTestCtx(TEST_USER_ID, (ctx) => createSessionLog(ctx, { painScore: 8, flag: false }));
   console.log("sessionLog.create ->", logResult);
 
   const afterActive = await prisma.regime.findFirst({ where: { userId: TEST_USER_ID, status: "ACTIVE" } });

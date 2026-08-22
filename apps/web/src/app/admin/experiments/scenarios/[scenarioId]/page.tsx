@@ -1,14 +1,15 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { use, useState } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import { qk } from "@/lib/rest/query-keys";
+import type { components } from "@/lib/rest/schema";
 
-import { trpc } from "@/lib/trpc/client";
-
-type ScenarioDetail = inferRouterOutputs<AppRouter>["adminExperiments"]["scenarios"]["getById"];
+type ScenarioDetail = components["schemas"]["ScenarioDetailResponse"];
 type Cycle = ScenarioDetail["cycles"][number];
 type PainPoint = ScenarioDetail["painTimeline"][number];
 type DiffEntry = NonNullable<Cycle["diffFromPrevious"]>[number];
@@ -488,14 +489,24 @@ function CycleCard({ cycle }: { cycle: Cycle }) {
 }
 
 function RunNextCyclePanel({ scenarioId, canRun }: { scenarioId: string; canRun: boolean }) {
-  const utils = trpc.useUtils();
-  const modelsQuery = trpc.adminExperiments.availableModels.useQuery();
+  const queryClient = useQueryClient();
+  const modelsQuery = useQuery({
+    queryKey: qk.adminModels(),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/models")),
+  });
   const [painPattern, setPainPattern] = useState<"IMPROVING" | "PLATEAUING" | "WORSENING" | "CONTRADICTORY">("PLATEAUING");
   const [days, setDays] = useState(7);
   const [model, setModel] = useState("");
 
-  const runNextCycle = trpc.adminExperiments.scenarios.runNextCycle.useMutation({
-    onSuccess: () => utils.adminExperiments.scenarios.getById.invalidate({ id: scenarioId }),
+  const runNextCycle = useMutation({
+    mutationFn: async (input: { painPattern: typeof painPattern; days: number; model: string }) =>
+      unwrap(
+        await api.POST("/admin/experiments/scenarios/{id}/next-cycle", {
+          params: { path: { id: scenarioId } },
+          body: input,
+        })
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.adminScenario(scenarioId) }),
   });
 
   const models = modelsQuery.data ?? [];
@@ -539,7 +550,7 @@ function RunNextCyclePanel({ scenarioId, canRun }: { scenarioId: string; canRun:
         <button
           type="button"
           disabled={!canRun || !model || runNextCycle.isPending}
-          onClick={() => runNextCycle.mutate({ scenarioId, painPattern, days, model })}
+          onClick={() => runNextCycle.mutate({ painPattern, days, model })}
         >
           {runNextCycle.isPending ? (
             <>
@@ -561,7 +572,10 @@ function RunNextCyclePanel({ scenarioId, canRun }: { scenarioId: string; canRun:
 
 export default function ScenarioDetailPage({ params }: { params: Promise<{ scenarioId: string }> }) {
   const { scenarioId } = use(params);
-  const detailQuery = trpc.adminExperiments.scenarios.getById.useQuery({ id: scenarioId });
+  const detailQuery = useQuery({
+    queryKey: qk.adminScenario(scenarioId),
+    queryFn: async () => unwrap(await api.GET("/admin/experiments/scenarios/{id}", { params: { path: { id: scenarioId } } })),
+  });
 
   if (detailQuery.isLoading) {
     return (

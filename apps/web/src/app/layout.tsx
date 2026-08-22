@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 
-import { TRPCProvider } from "@/lib/trpc/Provider";
+import { QueryProvider } from "@/lib/rest/QueryProvider";
 import { LargeTextToggle } from "@/components/LargeTextToggle";
 
 import "./globals.css";
@@ -77,7 +77,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </SignedIn>
             </nav>
           </header>
-          <TRPCProvider>{children}</TRPCProvider>
+          <QueryProvider>{children}</QueryProvider>
           <footer
             style={{
               display: "flex",
