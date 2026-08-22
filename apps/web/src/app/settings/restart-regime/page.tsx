@@ -1,9 +1,11 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 
-import { trpc } from "@/lib/trpc/client";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
 
 const pageStyle: React.CSSProperties = { maxWidth: 640, margin: "0 auto", padding: "2rem" };
 const cardStyle: React.CSSProperties = {
@@ -24,7 +26,10 @@ export default function RestartRegimePage() {
   const [reasonCode, setReasonCode] = useState("");
   const [comment, setComment] = useState("");
 
-  const restart = trpc.regime.restart.useMutation();
+  const restart = useMutation({
+    mutationFn: async (input: { reasonCode: "GOALS_CHANGED" | "STARTING_OVER" | "OTHER"; comment?: string }) =>
+      unwrap(await api.POST("/regimes/restart", { body: input })),
+  });
 
   return (
     <main style={pageStyle}>

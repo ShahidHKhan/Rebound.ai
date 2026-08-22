@@ -20,3 +20,4 @@ export {
   deleteMyAccount,
 } from "./handlers/user";
 export { submitOnboarding, getOnboardingJobStatus } from "./handlers/onboarding";
+export { getRegimeById, activateRegime, restartRegime } from "./handlers/regime";

@@ -1,14 +1,14 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TextInput, View } from "react-native";
-import type { inferRouterOutputs } from "@trpc/server";
-
-import type { AppRouter } from "@rebound/api";
 
 import { Button } from "../../../components/Button";
 import { ChipGroup } from "../../../components/ChipGroup";
-import { trpc } from "../../../lib/trpc";
+import { unwrap } from "../../../lib/rest/api-error";
+import { useApi } from "../../../lib/rest/ApiProvider";
+import type { components } from "../../../lib/rest/schema";
 import { useSharedStyles } from "../../../lib/styles";
 
 // Notification permission primer: shown once, before the OS permission
@@ -17,7 +17,7 @@ import { useSharedStyles } from "../../../lib/styles";
 // persistence pattern as lib/accessibility.tsx's `largeText` preference.
 const NOTIFICATION_PRIMER_SEEN_KEY = "rebound.notificationPrimerSeen";
 
-type RegimeData = inferRouterOutputs<AppRouter>["regime"]["getById"];
+type RegimeData = components["schemas"]["Regime"];
 type SessionSlot = "MORNING" | "EVENING";
 
 interface EditableExercise {
@@ -64,7 +64,11 @@ export default function RegimeReviewScreen() {
   const router = useRouter();
   const shared = useSharedStyles();
   const { regimeId } = useLocalSearchParams<{ regimeId: string }>();
-  const regimeQuery = trpc.regime.getById.useQuery({ regimeId });
+  const api = useApi();
+  const regimeQuery = useQuery({
+    queryKey: ["regimes", regimeId],
+    queryFn: async () => unwrap(await api.GET("/regimes/{regimeId}", { params: { path: { regimeId } } })),
+  });
   const [exercises, setExercises] = useState<EditableExercise[] | null>(null);
   const [activated, setActivated] = useState<{ exerciseCount: number } | null>(null);
   const [seededFrom, setSeededFrom] = useState<typeof regimeQuery.data>(undefined);
@@ -75,7 +79,14 @@ export default function RegimeReviewScreen() {
     setExercises(toEditable(regimeQuery.data));
   }
 
-  const activate = trpc.regime.activate.useMutation({
+  const activate = useMutation({
+    mutationFn: async (exercises: ReturnType<typeof toComparablePayload> | undefined) =>
+      unwrap(
+        await api.POST("/regimes/{regimeId}/activate", {
+          params: { path: { regimeId } },
+          body: { exercises },
+        })
+      ),
     onSuccess: (result) => setActivated(result),
   });
 
@@ -90,7 +101,7 @@ export default function RegimeReviewScreen() {
     const current = toComparablePayload(exercises);
     const changed = JSON.stringify(original) !== JSON.stringify(current);
 
-    activate.mutate({ regimeId, exercises: changed ? current : undefined });
+    activate.mutate(changed ? current : undefined);
   }
 
   // Only the very first regime a user ever activates should interrupt with

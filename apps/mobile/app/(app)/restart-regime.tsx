@@ -1,10 +1,12 @@
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 
 import { Button } from "../../components/Button";
 import { ChipGroup } from "../../components/ChipGroup";
-import { trpc } from "../../lib/trpc";
+import { unwrap } from "../../lib/rest/api-error";
+import { useApi } from "../../lib/rest/ApiProvider";
 import { useSharedStyles } from "../../lib/styles";
 
 type ReasonCode = "GOALS_CHANGED" | "STARTING_OVER" | "OTHER";
@@ -22,7 +24,11 @@ export default function RestartRegimeScreen() {
   const [reasonCode, setReasonCode] = useState<ReasonCode[]>([]);
   const [comment, setComment] = useState("");
 
-  const restart = trpc.regime.restart.useMutation();
+  const api = useApi();
+  const restart = useMutation({
+    mutationFn: async (input: { reasonCode: ReasonCode; comment?: string }) =>
+      unwrap(await api.POST("/regimes/restart", { body: input })),
+  });
 
   return (
     <ScrollView contentContainerStyle={shared.page}>

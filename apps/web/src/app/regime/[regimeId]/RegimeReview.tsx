@@ -1,14 +1,14 @@
 "use client";
 
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import type { inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "@rebound/api";
+import { unwrap } from "@/lib/rest/api-error";
+import { api } from "@/lib/rest/client";
+import type { components } from "@/lib/rest/schema";
 
-import { trpc } from "@/lib/trpc/client";
-
-type RegimeData = inferRouterOutputs<AppRouter>["regime"]["getById"];
+type RegimeData = components["schemas"]["Regime"];
 type SessionSlot = "MORNING" | "EVENING";
 
 interface EditableExercise {
@@ -67,7 +67,10 @@ function toEditable(data: RegimeData): EditableExercise[] {
 }
 
 export function RegimeReview({ regimeId }: { regimeId: string }) {
-  const regimeQuery = trpc.regime.getById.useQuery({ regimeId });
+  const regimeQuery = useQuery({
+    queryKey: ["regimes", regimeId],
+    queryFn: async () => unwrap(await api.GET("/regimes/{regimeId}", { params: { path: { regimeId } } })),
+  });
   const [exercises, setExercises] = useState<EditableExercise[] | null>(null);
   const [activated, setActivated] = useState<{ exerciseCount: number } | null>(null);
   // Tracks which query result we've already seeded local edit state from —
@@ -80,7 +83,14 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
     setExercises(toEditable(regimeQuery.data));
   }
 
-  const activate = trpc.regime.activate.useMutation({
+  const activate = useMutation({
+    mutationFn: async (exercises: ReturnType<typeof toComparablePayload> | undefined) =>
+      unwrap(
+        await api.POST("/regimes/{regimeId}/activate", {
+          params: { path: { regimeId } },
+          body: { exercises },
+        })
+      ),
     onSuccess: (result) => setActivated(result),
   });
 
@@ -95,10 +105,7 @@ export function RegimeReview({ regimeId }: { regimeId: string }) {
     const current = toComparablePayload(exercises);
     const changed = JSON.stringify(original) !== JSON.stringify(current);
 
-    activate.mutate({
-      regimeId,
-      exercises: changed ? current : undefined,
-    });
+    activate.mutate(changed ? current : undefined);
   }
 
   if (activated) {

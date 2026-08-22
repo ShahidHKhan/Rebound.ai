@@ -433,6 +433,203 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/regimes/{regimeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a regime by id, with its exercise list and (if present) source preset */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    regimeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Regime"];
+                    };
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Regime belongs to another user */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No regime with this id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/regimes/{regimeId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate a DRAFT regime — optionally with edited exercises, runs structural + clinical validation first */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    regimeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        exercises?: {
+                            exerciseId: string;
+                            sets?: number;
+                            reps?: number;
+                            durationSeconds?: number;
+                            frequency?: string;
+                            /** @enum {string} */
+                            sessionSlot: "MORNING" | "EVENING";
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivateRegimeResponse"];
+                    };
+                };
+                /** @description Not a DRAFT, or failed structural/clinical validation */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Regime belongs to another user */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No regime with this id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/regimes/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End the current user's active regime (self-service 'start over') */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        reasonCode: "GOALS_CHANGED" | "STARTING_OVER" | "OTHER";
+                        comment?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Ended */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RestartRegimeResponse"];
+                    };
+                };
+                /** @description No active regime to restart */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not authenticated */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -531,6 +728,72 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             completedAt: string | null;
+        };
+        Regime: {
+            id: string;
+            userId: string;
+            versionNumber: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** @enum {string} */
+            createdBy: "AGENT" | "USER_EDITED" | "PRESET_FALLBACK";
+            /** @enum {string} */
+            status: "DRAFT" | "ACTIVE" | "SUPERSEDED" | "ENDED";
+            endReason: string | null;
+            sourcePresetId: string | null;
+            sourcePreset: {
+                id: string;
+                name: string;
+                description: string | null;
+                /** @enum {string|null} */
+                riskTier: "GENERAL" | "LIGHT_INJURY" | "HEAVIER_CHRONIC_ELDERLY" | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** @enum {string} */
+                kind: "FALLBACK" | "SKELETON";
+                /** @enum {string|null} */
+                goalType: "INJURY_RECOVERY" | "STRENGTH" | "MOBILITY" | "GENERAL_FITNESS" | null;
+                bodyRegionTags: string[];
+                slots: {
+                    id: string;
+                    presetId: string;
+                    /** @enum {string} */
+                    sessionSlot: "MORNING" | "EVENING";
+                    orderIndex: number;
+                    label: string;
+                    /** @enum {string|null} */
+                    exerciseCategory: "MOBILITY" | "STRENGTH" | "STRETCH" | null;
+                    muscleGroupTags: string[];
+                    maxDifficulty: number | null;
+                    suggestedSets: number | null;
+                    suggestedReps: number | null;
+                    suggestedDurationSeconds: number | null;
+                    suggestedFrequency: string | null;
+                    rationale: string | null;
+                }[];
+            } | null;
+            parentRegimeId: string | null;
+            exerciseList: {
+                id: string;
+                regimeId: string;
+                exerciseId: string;
+                sets: number | null;
+                reps: number | null;
+                durationSeconds: number | null;
+                frequency: string | null;
+                /** @enum {string} */
+                sessionSlot: "MORNING" | "EVENING";
+                orderIndex: number;
+                exercise: components["schemas"]["Exercise"];
+            }[];
+        };
+        ActivateRegimeResponse: {
+            regimeId: string;
+            exerciseCount: number;
+        };
+        RestartRegimeResponse: {
+            /** @enum {boolean} */
+            success: true;
         };
     };
     responses: never;

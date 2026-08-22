@@ -341,6 +341,297 @@
           "createdAt",
           "completedAt"
         ]
+      },
+      "Regime": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "enum": [
+              "AGENT",
+              "USER_EDITED",
+              "PRESET_FALLBACK"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "SUPERSEDED",
+              "ENDED"
+            ]
+          },
+          "endReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePresetId": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePreset": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true
+              },
+              "riskTier": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "GENERAL",
+                  "LIGHT_INJURY",
+                  "HEAVIER_CHRONIC_ELDERLY"
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "FALLBACK",
+                  "SKELETON"
+                ]
+              },
+              "goalType": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "INJURY_RECOVERY",
+                  "STRENGTH",
+                  "MOBILITY",
+                  "GENERAL_FITNESS"
+                ]
+              },
+              "bodyRegionTags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "presetId": {
+                      "type": "string"
+                    },
+                    "sessionSlot": {
+                      "type": "string",
+                      "enum": [
+                        "MORNING",
+                        "EVENING"
+                      ]
+                    },
+                    "orderIndex": {
+                      "type": "integer"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "exerciseCategory": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "MOBILITY",
+                        "STRENGTH",
+                        "STRETCH"
+                      ]
+                    },
+                    "muscleGroupTags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "maxDifficulty": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedSets": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedReps": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedDurationSeconds": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "suggestedFrequency": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rationale": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "presetId",
+                    "sessionSlot",
+                    "orderIndex",
+                    "label",
+                    "exerciseCategory",
+                    "muscleGroupTags",
+                    "maxDifficulty",
+                    "suggestedSets",
+                    "suggestedReps",
+                    "suggestedDurationSeconds",
+                    "suggestedFrequency",
+                    "rationale"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "riskTier",
+              "createdAt",
+              "kind",
+              "goalType",
+              "bodyRegionTags",
+              "slots"
+            ]
+          },
+          "parentRegimeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "exerciseList": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "regimeId": {
+                  "type": "string"
+                },
+                "exerciseId": {
+                  "type": "string"
+                },
+                "sets": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "reps": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "durationSeconds": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "frequency": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "sessionSlot": {
+                  "type": "string",
+                  "enum": [
+                    "MORNING",
+                    "EVENING"
+                  ]
+                },
+                "orderIndex": {
+                  "type": "integer"
+                },
+                "exercise": {
+                  "$ref": "#/components/schemas/Exercise"
+                }
+              },
+              "required": [
+                "id",
+                "regimeId",
+                "exerciseId",
+                "sets",
+                "reps",
+                "durationSeconds",
+                "frequency",
+                "sessionSlot",
+                "orderIndex",
+                "exercise"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "versionNumber",
+          "createdAt",
+          "createdBy",
+          "status",
+          "endReason",
+          "sourcePresetId",
+          "sourcePreset",
+          "parentRegimeId",
+          "exerciseList"
+        ]
+      },
+      "ActivateRegimeResponse": {
+        "type": "object",
+        "properties": {
+          "regimeId": {
+            "type": "string"
+          },
+          "exerciseCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "regimeId",
+          "exerciseCount"
+        ]
+      },
+      "RestartRegimeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "success"
+        ]
       }
     },
     "parameters": {}
@@ -825,6 +1116,206 @@
           },
           "403": {
             "description": "Job belongs to another user"
+          }
+        }
+      }
+    },
+    "/regimes/{regimeId}": {
+      "get": {
+        "tags": [
+          "regime"
+        ],
+        "summary": "Get a regime by id, with its exercise list and (if present) source preset",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "regimeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Regime"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Regime belongs to another user"
+          },
+          "404": {
+            "description": "No regime with this id"
+          }
+        }
+      }
+    },
+    "/regimes/{regimeId}/activate": {
+      "post": {
+        "tags": [
+          "regime"
+        ],
+        "summary": "Activate a DRAFT regime — optionally with edited exercises, runs structural + clinical validation first",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "regimeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "exercises": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "exerciseId": {
+                          "type": "string"
+                        },
+                        "sets": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10
+                        },
+                        "reps": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 50
+                        },
+                        "durationSeconds": {
+                          "type": "integer",
+                          "minimum": 5,
+                          "maximum": 1800
+                        },
+                        "frequency": {
+                          "type": "string",
+                          "maxLength": 50
+                        },
+                        "sessionSlot": {
+                          "type": "string",
+                          "enum": [
+                            "MORNING",
+                            "EVENING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "exerciseId",
+                        "sessionSlot"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivateRegimeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a DRAFT, or failed structural/clinical validation"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Regime belongs to another user"
+          },
+          "404": {
+            "description": "No regime with this id"
+          }
+        }
+      }
+    },
+    "/regimes/restart": {
+      "post": {
+        "tags": [
+          "regime"
+        ],
+        "summary": "End the current user's active regime (self-service 'start over')",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reasonCode": {
+                    "type": "string",
+                    "enum": [
+                      "GOALS_CHANGED",
+                      "STARTING_OVER",
+                      "OTHER"
+                    ]
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "reasonCode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestartRegimeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No active regime to restart"
+          },
+          "401": {
+            "description": "Not authenticated"
           }
         }
       }

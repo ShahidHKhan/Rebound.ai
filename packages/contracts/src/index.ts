@@ -8,3 +8,4 @@ export * from "./schemas/health";
 export * from "./schemas/exercise";
 export * from "./schemas/user";
 export * from "./schemas/onboarding";
+export * from "./schemas/regime";
